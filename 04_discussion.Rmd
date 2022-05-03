@@ -1,0 +1,13 @@
+# Discussion
+
+1- Spatio-temporal MEM is able to capture both the spatial trends in the data but also how those spatial trends vary over time in a way that none of the other models are actually able to do. Gives us an output that is directly comparable to current methods used to obtain index of abundance.
+
+2- Highlight importance of accounting for the non-target species as changing how much the model thinks there are will have a big impact on halibut catch rates.
+
+3- Straightforward from what we obtain to move into getting a biomass estimate from this in similar ways as more traditional methods, as we have the weight of fish in the dataset. Caveat of need to incorporate those uncertainties appropriately.
+
+4- Persistence analysis indicates potential problems with the fixed stations due to multivariate nature of model and impact of non-target species, even if the target species are likely captured fine by the fixed stations.
+
+5- Stratified design is likely to solve these issues given enough time, and already corrects the scale of the time series that includes both datasets.
+
+6- This approach is applicable to literally any longline fishery (give examples). Future research could look at going into more details, instead of just having target non-target, have more fine-scale detail.
