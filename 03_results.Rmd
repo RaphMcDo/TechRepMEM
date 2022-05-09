@@ -4,9 +4,9 @@
 
 Out of the 4 models that were fit to the data, 3 of them (random intercept, random walk and AR(1) process) successfully converged but the model with random slopes gave false convergence and was therefore rejected. The RMSE, AIC and BIC values from this model validation process can be seen in Table \@ref(tab:valid). These values appear to indicate that there is very little difference between the model fits as the RMSE are almost all identical to the $5^{th}$ decimal. According to the AIC and BIC values, the best model would be the random walk as it has the lowest values for both metrics, although the difference is not very large. The model used for all analysis moving forward is therefore the random walk model.
 
-```{r valid, include=F}
+```{r valid, echo=F}
 load("validation_table.RData")
-kableExtra::kable(valid_frame)
+kableExtra::kable(valid_frame,booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model validation approaches, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).")
 ```
 
 ## Fit to Data
@@ -15,16 +15,16 @@ As the best model was considered to be the random walk approach, that model was 
 
 The model successfully converged for all cases, but the fits with the 2017 and onwards data show signs of overparameterization as all of them have atleast 1 variance parameter related to the random intercepts that is estimated arbitrarily close to 0 (see Table \@ref(tab:par-estim)). Most other parameters are estimated very similarly for all fits with the except of $p_{nt}$ and $\mu_{nt}$. $p_{nt}$ is estimated at a very low value when only the fixed stations are included with a correspondingly lower estimate of $\mu_{nt}$, while fits that include the stratified data estimate both parameters at significantly higher values. 
 
-```{r par-estim,include=F}
+```{r par-estim,echo=F}
 
-par_estim_tab<-data.frame(Parameter=c("$p_{nt}$","Anisotropy Parameter 1","Anisotropy Parameter 2","$\\phi_t$","$\\phi_{nt}$","$\\\sigma_t$","$\\sigma_{nt}$","$\\sigma_{vess,t}$","$\\sigma_{vess,nt}$","$\\sigma_{int,t}$","$\\sigma_{int,nt}$","$\\mu_{t}$","$\\mu_{nt}$"),
+par_estim_tab<-data.frame(Parameter=c("$p_{nt}$","Anisotropy Parameter 1","Anisotropy Parameter 2","$\\phi_t$","$\\phi_{nt}$","$\\sigma_t$","$\\sigma_{nt}$","$\\sigma_{vess,t}$","$\\sigma_{vess,nt}$","$\\sigma_{int,t}$","$\\sigma_{int,nt}$","$\\mu_{t}$","$\\mu_{nt}$"),
                           'Both Datasets (Full)'=c("0.788 (0.001)","-0.100 (0.027)","-0.021 (0.025)","0.050 (0.002)","0.048 (0.001)","1.619 (0.032)","1.915 (0.030)","0.760 (0.099)","0.882 (0.091)","0.114 (0.038)","0.293 (0.074)","-12.590 (0.221)","-7.531 (0.384)"),
                           'Fixed Stations (Full)'=c("0.129 (0.009)","-0.081 (0.026)","0.020 (0.026)","0.053 (0.002)","0.060 (0.002)","1.468 (0.032)","1.599 (0.029)","0.601 (0.083)","0.744 (0.088)","0.185 (0.048)","0.078 (0.058)","-12.866 (0.264)","-9.432 (0.202)"),
                           'Both Datasets (2017+)'=c("0.881 (0.0005)","-0.131 (0.095)","-0.019 (0.066)","0.054 (0.005)","0.015 (0.002)","1.956 (0.085)","1.493 (0.038)","0.735 (0.228)","0.746 (0.108)","0.0003 (0.043)","0.158 (0.119)","-12.012 (0.181)","-6.319 (0.225)"),
                           'Fixed Stations (2017+)'=c("0.246 (0.015)","-0.186 (0.079)","0.129 (0.077)","0.060 (0.007)","0.046 (0.005)","1.408 (0.080)","1.582 (0.074)","0.485 (0.174)","0.748 (0.187)","0.00010 (0.083)","0.233 (0.220)","-11.133 (0.174)", "-9.559 (0.381)"),
                           'Stratified Data (2017+)'=c("0.903 (0.0005)","-0.085 (0.090)","-0.147 (0.078)","0.058 (0.007)","0.051 (0.005)","1.985 (0.101)","0.885 (0.029)","0.505 (0.214)","0.624 (0.092)","0.00005 (0.030)","0.0002 (0.038)","-12.262 (0.164)","-6.015 (0.117)"))
 
-kableExtra::kable(par_estim_tab)
+kableExtra::kable(par_estim_tab,booktab=T,escape=F,align="c",row.names = F, caption = "Estimated values of parameter for each different model fit with standard error in parentheses.")
 
 ```
 

@@ -52,7 +52,7 @@ type:
 knit: bookdown::render_book
 site: bookdown::bookdown_site
 link-citations: true
-bibliography: bib/refs.bib
+bibliography: bib/library.bib
 # Any extra LaTeX code for the header:
 header-includes:
  - \usepackage{float}

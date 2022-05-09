@@ -14,9 +14,9 @@ As mentioned previously, there are 2 surveys with different sampling designs tha
 
 ### Fixed Stations
 
-The original formulation of this survey followed a stratified design with fixed stations with the original number of stations set to 222, with 30 reserved for the 3NOPs subdivision [@DenHeyer2015]. The strata were defined based on the observed landings by trips between 1993 and 1997 between 3 categories: high catches (>250 kg), medium catches (50-249 kg) and low catches (<49 kg) with the number of planned stations proportionally allocated following a ratio of 5:7:10 for the low, medium, high strata respectively [@Zwaneburg2000,@Zwaneburg2003,@DenHeyer2015,@Smith2016a]. Station coverage has been inconsistent over time as not all stations have been covered every year with new stations being added in the mid-2000s [@DenHeyer2015], see Figure WHATEVER for locations of sampled stations over time. The number of fixed stations decreased to around 100 a year in 2017 and onwards due to the implementation of the new stratified random survey. See Table WHATEVER for the number of stations sampled every year.
+The original formulation of this survey followed a stratified design with fixed stations with the original number of stations set to 222, with 30 reserved for the 3NOPs subdivision [@DenHeyer2015]. The strata were defined based on the observed landings by trips between 1993 and 1997 between 3 categories: high catches (>250 kg), medium catches (50-249 kg) and low catches (<49 kg) with the number of planned stations proportionally allocated following a ratio of 5:7:10 for the low, medium, high strata respectively [@zwanenburg2000,@zwanenburg2003,@DenHeyer2015,@Smith2016a]. Station coverage has been inconsistent over time as not all stations have been covered every year with new stations being added in the mid-2000s [@DenHeyer2015], see Figure WHATEVER for locations of sampled stations over time. The number of fixed stations decreased to around 100 a year in 2017 and onwards due to the implementation of the new stratified random survey. See Table WHATEVER for the number of stations sampled every year.
 
-Survey fishing protocol is 1000 hook sets left in the water for 10 hours and using Mustad circle hooks #14 or greater between 4 am and noon, but there have been variations in both number and size of hooks (size #16 hooks becoming more common later in the time series) [@DenHeyere2015]. The start or end of the longline is supposed to be within 3 nautical miles of the station. Vessel and captain participation has varied over time following many different factors, with over 40 individual captains and 60 different vessels identified over time [@Smith2016a].
+Survey fishing protocol is 1000 hook sets left in the water for 10 hours and using Mustad circle hooks #14 or greater between 4 am and noon, but there have been variations in both number and size of hooks (size #16 hooks becoming more common later in the time series) [@DenHeyer2015]. The start or end of the longline is supposed to be within 3 nautical miles of the station. Vessel and captain participation has varied over time following many different factors, with over 40 individual captains and 60 different vessels identified over time [@Smith2016a].
 
 PUT TABLE OF NUMBER OF STATIONS SAMPLED A YEAR WITH BOTH STRATIFIED AND FIXED AND TOTAL.
 
@@ -43,7 +43,7 @@ The reduced MEM allows for three possible outcomes for every hook following the 
 \alpha_i = (e^{-\lambda S_i},(1-e^{-\lambda S_i})\frac{\lambda_T}{\lambda},(1-e^{-\lambda S_i})\frac{\lambda_{NT}}{\lambda})
 \end{equation}
 
-where $S_i$ is the soak time of longline set $i$ and $\lambda = \lambda_T + \lambda_{NT}. 
+where $S_i$ is the soak time of longline set $i$ and $\lambda = \lambda_T + \lambda_{NT}$. 
 
 This formulation did not account for the condition of hooks that return without catching animals, as these are not guaranteed to still be baited. @Etienne2013 therefore reformulated this MEM into the Full MEM, wherein hooks can also come back unbaited (which includes broken or missing hooks). These empty hooks are assumed to come from interactions with animals, but due to identifiability concerns another assumption has to be made as to whether they are caused by target or non-target species [@Etienne2013]. Since the gear is more likely to be targeted for target species and that non-target species are likely more abundant, it seemed more reasonable to assume that empty or broken hooks were caused by non-target species [@Etienne2013, @Luo2022]. This extra outcome is therefore added to the multinomial model, which nows follows the following distributions:
 
@@ -137,16 +137,16 @@ While this was not required by the contract, a quick analysis of the ability of 
 A relatively straightforward approach to test the fixed stations for their ability to appropriately track population abundance change over time is test the persistence of these distributions over time [@Lee2018]. As our data was counts and therefore violated the basic assumptions of the traditional ANOVA approach chosen by @Lee2018, we instead decided to take the more simple approach of doing pairwise comparisons between years of Atlantic halibut catch rates and non-target species catch rates, which can be calculated as follow [@Warren1994,@Li2015]: 
 
 \begin{equation}
-\overbar{\omega} = \frac{s^2_y/4}{s^2_s-s^2_y/4}
+\bar{\omega} = \frac{s^2_y/4}{s^2_s-s^2_y/4}
 \end{equation}
 
-where $\overbar{\omega}$ is the measurement of persistence degree wherein a smaller value indicates a greater degree of persistence, $s^2_y$ is the difference in catch rates of the same site between compared years, and $s^2_s$ is the difference in catch rates between different sites in the same year. These last 2 variables are calculated as:
+where $\bar{\omega}$ is the measurement of persistence degree wherein a smaller value indicates a greater degree of persistence, $s^2_y$ is the difference in catch rates of the same site between compared years, and $s^2_s$ is the difference in catch rates between different sites in the same year. These last 2 variables are calculated as:
 
 \begin{equation}
-s^2_s = \frac{\sum_{y=1}^2 \sum_{y=1}^{n_i} (x_{iy}-\overbar{x}_y)^2}{m_1+m_2-2}
+s^2_s = \frac{\sum_{y=1}^2 \sum_{y=1}^{n_i} (x_{iy}-\bar{x}_y)^2}{m_1+m_2-2}
 \end{equation}
 \begin{equation}
-s^2_y = \sum_{i=1}^m (d_i - \overbar{d})^2 / (m-1)
+s^2_y = \sum_{i=1}^m (d_i - \bar{d})^2 / (m-1)
 \end{equation}
 
-where $x_{iy}$ is the observed catch rate in site $i$ and year $y$, $\overbar{x}_y$ is the mean observed catch rate of year $y$, $m_1$ is the number of fixed stations in the first year included in the pairwise comparison while $m_2$ is the same for the second year, $d_i$ is the different in catch rate between two years in site $i$ and $\overbar{d}$ is the mean catch rate difference. An important note here is that, as the coverage of stations changed over time, there are often more stations included in the $s^2_s$ than $s^2_y$ as all stations in both years are included in $s^2_s$, but only the stations fished in both years can be included in $s^2_y$. This approach is done on the target species (halibut) catch rates and non-target catch rates separately for the fixed stations dataset between 2000 and 2020.
+where $x_{iy}$ is the observed catch rate in site $i$ and year $y$, $\bar{x}_y$ is the mean observed catch rate of year $y$, $m_1$ is the number of fixed stations in the first year included in the pairwise comparison while $m_2$ is the same for the second year, $d_i$ is the different in catch rate between two years in site $i$ and $\bar{d}$ is the mean catch rate difference. An important note here is that, as the coverage of stations changed over time, there are often more stations included in the $s^2_s$ than $s^2_y$ as all stations in both years are included in $s^2_s$, but only the stations fished in both years can be included in $s^2_y$. This approach is done on the target species (halibut) catch rates and non-target catch rates separately for the fixed stations dataset between 2000 and 2020.
