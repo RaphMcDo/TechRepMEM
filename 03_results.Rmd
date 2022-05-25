@@ -6,7 +6,7 @@ Out of the 4 models that were fit to the data, 3 of them (random intercept, rand
 
 ```{r valid, echo=F}
 load("validation_table.RData")
-colnames(valid_frame)<-c("Observation RMSE","Target Field RMSE", "Non-Target Field RMSE", "AIC", "BIC")
+colnames(valid_frame)<-c("Model","Observation RMSE","Target Field RMSE", "Non-Target Field RMSE", "AIC", "BIC")
 csasdown::csas_table(valid_frame,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model validation approaches, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
 ```
 
@@ -14,7 +14,7 @@ csasdown::csas_table(valid_frame,format="latex",booktab=T,escape=F,align="c",row
 
 As the best model was considered to be the random walk approach, that model was the one fit to the varying data subsets. Due to issues fitting the 1999 data to the spatial model and to various versions of a spatio-temporal model, the analysis focuses on the data starting in 2000 and does not incorporate the data from 1998 and 1999.
 
-The model successfully converged for all cases, but the fits with the 2017 and onwards data show signs of overparameterization as all of them have atleast 1 variance parameter related to the random intercepts that is estimated arbitrarily close to 0 (see Table \@ref(tab:par-estim)). Most other parameters are estimated very similarly for all fits with the exception of $p_{nt}$ and $\mu_{nt}$. $p_{nt}$ is estimated at a very low value when only the fixed stations are included with a correspondingly lower estimate of $\mu_{nt}$, while fits that include the stratified data estimate both parameters at significantly higher values. 
+The model successfully converged for all cases, but the fits with the 2017 and onwards data show signs of overparameterization as all of them have at least 1 variance parameter related to the random intercepts that is estimated arbitrarily close to 0 (see Table \@ref(tab:par-estim)). Most other parameters are estimated very similarly for all fits with the exception of $p_{nt}$ and $\mu_{nt}$. $p_{nt}$ is estimated at a very low value when only the fixed stations are included with a correspondingly lower estimate of $\mu_{nt}$, while fits that include the stratified data estimate both parameters at significantly higher values. 
 
 ```{r par-estim,echo=F}
 
@@ -24,54 +24,54 @@ par_estim_tab<-data.frame(Parameter=c("$p_{nt}$","Anisotropy Parameter 1","Aniso
                           'Both Datasets (2017+)'=c("0.881 (0.0005)","-0.131 (0.095)","-0.019 (0.066)","0.054 (0.005)","0.015 (0.002)","1.956 (0.085)","1.493 (0.038)","0.735 (0.228)","0.746 (0.108)","0.0003 (0.043)","0.158 (0.119)","-12.012 (0.181)","-6.319 (0.225)"),
                           'Fixed Stations (2017+)'=c("0.246 (0.015)","-0.186 (0.079)","0.129 (0.077)","0.060 (0.007)","0.046 (0.005)","1.408 (0.080)","1.582 (0.074)","0.485 (0.174)","0.748 (0.187)","0.00010 (0.083)","0.233 (0.220)","-11.133 (0.174)", "-9.559 (0.381)"),
                           'Stratified Data (2017+)'=c("0.903 (0.0005)","-0.085 (0.090)","-0.147 (0.078)","0.058 (0.007)","0.051 (0.005)","1.985 (0.101)","0.885 (0.029)","0.505 (0.214)","0.624 (0.092)","0.00005 (0.030)","0.0002 (0.038)","-12.262 (0.164)","-6.015 (0.117)"))
-colnames(par_estim_tab)<-c("Both Datasets (Full)","Fixed Stations (Full)", "Both Datasets (2017+)","Fixed Station (2017+)","Stratified Data (2017+)")
+colnames(par_estim_tab)<-c("Parameter","Both Datasets (Full)","Fixed Stations (Full)", "Both Datasets (2017+)","Fixed Station (2017+)","Stratified Data (2017+)")
 csasdown::csas_table(par_estim_tab,escape=F,align="c",row.names = F, caption = "Estimated values of parameter for each different model fit with standard error in parentheses.",format="latex",font=7)
 
 ```
 
-The distribution of vessel effects are very similar between model fits, with more variability and a wider distribution when more data is incorporated (i.e., fits with just the fixed stations or just the stratified data from 2017 onwards tend to have lower variance and tighter distribution, see Figure \@ref(fig:vess-eff)).
+The distribution of vessel effects are very similar between model fits, with more variability and a wider distribution when more data is incorporated (i.e., fits with just the fixed stations or just the stratified data from 2017 onwards tend to have lower variance and tighter distribution, see Figure \@ref(fig:vess-eff)). This is likely caused by the stricter protocol for the stratified random sets that result in less variability between vessels.
 
-```{r vess-eff,echo=F,fig.ncol=2,out.width="60%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Distribution of estimated vessel effect for each dataset combinations fit to the random walk model."}
+```{r vess-eff,echo=F,fig.ncol=2,out.width="60%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Distribution of estimated vessel effect using data from the fixed stations and stratified survey design both together and separately between 2000 and 2021 and between 2017 and 2021."}
 knitr::include_graphics(c("vess_eff_t_walk.png","vess_eff_nt_walk.png"))
 ```
 
-The overparameterization of fits that only contain data from 2017 onwards is very visible in Figure \@ref(fig:rand-int) where most intercepts do not vary over time due to the model not being able to estimate the variance around them. For the fits that have data starting in 2000, there are clear changes over time in the random intercepts. Non-target species intercepts are always lower when only the fixed stations are considered, as expected with the difference in the estimated value of $p_{nt}$. However, the inclusion of data from the stratified design also seems to make the model capture an increase in overall average expected non-target catch rates starting in 2016 which does not show up when only the fixed data are included. 
+The overparameterization of fits that only contain data from 2017 onwards is very visible in Figure \@ref(fig:rand-int) where most intercepts do not vary over time due to the model not being able to estimate the variance around them. For the fits that have data starting in 2000, there are clear changes over time in the random intercepts. Non-target species intercepts are always lower when only the fixed stations are considered, as expected with the difference in the estimated value of $p_{nt}$. Notably, the stratified random survey, with the additional hook condition data, suggests an increase in overall average expected non-target catch rates starting in 2016 which does not show up when the model is fit only to fixed station data. 
 
-The pattern for the target species (halibut) are a lot more similar between model fits, with both capturing an overall increase in expected catch rates over the time series. However, the fit with just the fixed stations has a slightly higher increase.
+The pattern for the target species (halibut) are a lot more similar between model fits, with both capturing an overall increase in expected catch rates over the time series. However, the fit with just the fixed stations has a slightly larger increase.
 
-```{r rand-int,echo=F,fig.ncol=2,out.width="60%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Estimated random intercepts for different dataset combinations fit to random walk model."}
+```{r rand-int,echo=F,fig.ncol=2,out.width="60%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Estimated random intercepts using data from the fixed stations and stratified survey design both together and separately between 2000 and 2021 and between 2017 and 2021."}
 knitr::include_graphics(c("rand_int_walk.png","rand_int_2017_walk.png"))
 ```
 
 For the indices themselves ($\lambda_t$ and $\lambda_{nt}$), there are large differences when looking at the fits that only include data from 2017 onwards (Figure \@ref(fig:target-indices)). The fit with just the fixed stations has a completely different pattern than the other 2 fits. Those other 2 fits have similar trends, but the estimates when both datasets are included are more than twice as large as when just the stratified data is included. However, as all these fits are from a model that is overparameterized for the length of time present in the data, it is difficult to find clear links between the datasets and the modelling output.
 
-For the fits that incorporate data starting in 2000, the trends between the two fits are very similar but the fit with both datasets always has larger indices than the one with just fixed stations. This matches up with the fits that estimate $p_{nt}$ at very low value (fixed stations), which would indicate that the model implicitly assumes that the abundance of non-target species is much larger than just the number of non-target species caught would indicate.
+For the fits that incorporate data starting in 2000, the trends between the two fits are very similar but the fit with both datasets always has larger indices than the one with just fixed stations. Notably, the model estimates a low $p_{nt}$ for the fixed stations, which implies that the abundance of non-target species is much larger than the number caught and results in lower capture rates ($\lambda_{nt}$, Figure \@ref(fig:non-t-indices)).
 
-```{r target-indices,echo=F,fig.ncol=2,out.width="75%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Estimated overall index for target species for different dataset combinations fit to random walk model."}
+```{r target-indices,echo=F,fig.ncol=2,out.width="75%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Estimated overall index for target species using data from the fixed stations and stratified survey design both together and separately between 2000 and 2021 and between 2017 and 2021"}
 knitr::include_graphics(c("comp_all_ldat_2017_walk.png","comp_all_ldat_walk.png"))
 ```
-While having a lower $p_{nt}$ implicitly means that the model considers there to be a lot more non-target species than is captured by the data, this does not result in higher non-target estimated catch rates but rather in lower ones (Figure \@ref(fig:non-t-indices)). This is because these non-target species are considered to be significantly more likely to escape, meaning that a lot more of them need to come around for one to be caught, which will result in lower estimated catch rates.
 
-```{r non-t-indices,echo=F,fig.ncol=2,out.width="75%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Estimated overall index for target species for different dataset combinations fit to random walk model."}
+
+```{r non-t-indices,echo=F,fig.ncol=2,out.width="75%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Estimated overall index for non-target species using data from the fixed stations and stratified survey design both together and separately between 2000 and 2021 and between 2017 and 2021."}
 knitr::include_graphics(c("comp_all_ldant_walk.png","comp_all_ldant_2017_walk.png"))
 ```
 
 
 Looking at the outcomes spatially for the fit with both datasets, the locations of halibut high catch rates appear to generally focus around the Scotian Shelf in the western part of the modelled area, with some spikes around the Laurentian Channel in the middle and a few isolated spikes on the eastern edge of the modelled area (Figure \@ref(fig:target-spat)). For non-target catch rates, the highest spikes are consistently located on the western edge of the area towards the Gulf of Maine and the Bay of Fundy, with other less common spikes located east of the Laurentian Channel. The spatial outcomes from the fit with just the fixed stations has similar patterns (figures in Appendix 2).
 
-```{r target-spat,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Station-specific estimated target species cathc rate for all data between 2000 and 2021 fit to random walk model."}
+```{r target-spat,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Station-specific estimated target species catch rates obtained using data from both the fixed stations and stratified survey design."}
 knitr::include_graphics("all_ldat_both_data.png")
 ```
 
-```{r non-target-spat,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Station-specific estimated non-target species cathc rate for all data between 2000 and 2021 fit to random walk model."}
+```{r non-target-spat,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Station-specific estimated non-target species catch rates obtained using data from both the fixed stations and stratified survey design."}
 knitr::include_graphics("all_ldant_both_data.png")
 ```
 
 ## Persistence
 
-The persistence index of the spatial pattern for target species (halibut) indicate that the fixed stations are extremely likely (>98%, see table in @Li2015) to capture the changes over time of this population abundance as the index is extremely low for all combination of years. However, the persistence of non-target species exhibits a different pattern wherein there appears to be a spatial shift in their distribution between early in the time series (mid-2000s) and the peak halibut abundance late in the time series (2017 to 2020). This would represent a high chance that the fixed stations would miss changes in their distribution which, due to the nature of the multinomial model, would impact the estimation of target catch rates. Figure \@ref(fig:rand-int) shows some evidence of this happening in that the expected catch rate for non-target species increases in the late 2010s when the stratified data is included, but not when only the fixed stations are analyzed.
+The persistence index of the spatial pattern for target species (halibut) indicate that the fixed stations are extremely likely (>98%, see table in @Li2015) to capture the changes over time of this population abundance as the index is extremely low for all combination of years. However, the persistence of non-target species exhibits a different pattern (Figure \@ref(fig:persist)) wherein there appears to be a spatial shift in their distribution between early in the time series (mid-2000s) and the peak halibut abundance late in the time series (2017 to 2020). This would represent a high chance that the fixed stations would miss changes in their distribution which, due to the nature of the multinomial model, would impact the estimation of target catch rates. Figure \@ref(fig:rand-int) shows some evidence of this happening in that the expected catch rate for non-target species increases in the late 2010s when the stratified data is included, but not when only the fixed stations are analyzed.
 
-```{r persist,echo=F,fig.ncol=2,out.width="60%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Persistence index between each years for observed target species (top panel) and non-target species (bottom panel) catch rates."}
+```{r persist,echo=F,fig.ncol=2,out.width="60%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Persistence index between years for target species (top panel) and non-target species (bottom panel) catch rates."}
 knitr::include_graphics(c("persist_raster_plot_walk.png","persist_nt_raster_plot_walk.png"))
 ```
 

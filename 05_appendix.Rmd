@@ -139,13 +139,15 @@ Thorson, J, Shelton, A, Ward, E., Skaug, H. 2015c. Geostatistical delta-generali
 
 Trzcinski, M, Armsworthy, S, Wilson, S, Mohn, R, Fowler, M and Campana, S. 2009. Atlantic halibut on the Scotian Shelf and Southern Grand Banks (NAFO Division 3NOPs4VWX5Zc) – Industry/DFO longline survey and tagging results to 2008. DFO Canadian Scientific Advisory Sec. Res. Doc. 2009/026: vi +43p
 
+\clearpage
+
 # {#app:second-appendix}
 
-```{r target-spat-fixed,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Station-specific estimated target species cathc rate for all data between 2000 and 2021 fit to random walk model."}
+```{r target-spat-fixed,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Station-specific estimated target species catch rates obtained using data from only the fixed stations."}
 knitr::include_graphics("1phi_no_cons_mean_all_ldat.png")
 ```
 
-```{r non-target-spat-fixed,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Station-specific estimated non-target species cathc rate for all data between 2000 and 2021 fit to random walk model."}
+```{r non-target-spat-fixed,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Station-specific estimated non-target species catch rates obtained using data from only the fixed stations."}
 knitr::include_graphics("1phi_no_cons_mean_all_ldant.png")
 ```
 
