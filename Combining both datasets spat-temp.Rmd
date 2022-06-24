@@ -1,0 +1,1898 @@
+---
+title: "Random eff temp no constant mean"
+author: "Raphaël McDonald"
+date: "1/19/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r initial-data-vis}
+library(dplyr)
+library(sf)
+
+library(TMB) 
+# # Call TMB function value
+# compile("multi_year_prod.cpp")#,"&> C:/Users/mcdonaldra/Documents/errors.txt")
+# # Dynamically link the C++ code
+# dyn.load(dynlib("multi_year_prod"))
+# Call TMB function value
+compile("spat_temp_both_datasets.cpp")#,"&> C:/Users/mcdonaldra/Documents/errors.txt")
+# # Dynamically link the C++ code
+dyn.load(dynlib("spat_temp_both_datasets"))
+
+
+rand_data<-read.csv("RandomSurvey.csv")
+dim(rand_data)
+unique(rand_data$YEAR)
+#Confirmed that this is the same data, but it has 2021 now, which is fun
+
+fixed_data<-read.csv("FixedSurvey.csv")
+dim(fixed_data)
+unique(fixed_data$YEAR)
+#contains a lot more data, all the way from 1998 to 2021, meaning I have twice the data for 2017-2021
+colnames(fixed_data)
+
+#The fixed data station does not appear to have the 300 hooks subset, that it is just the overall stuff from the 1000 hooks, meaning only the reduced multinomial model could be applied to it (once I've figured out the impact of a fixed survey design on the spatial model)
+
+library(sp)
+library(maptools)
+library(rgeos)
+library(PBSmapping)
+
+prj4s=CRS("+init=epsg:4326")
+utm.prj4s=CRS("+init=epsg:32620")
+
+sf_fixed_data<-st_as_sf(fixed_data, coords=c("LONGITUDE","LATITUDE"))
+st_crs(sf_fixed_data)<-prj4s
+
+survey_strats<-load("SurveyStrata.RData")
+survey_stret<-as.PolySet(surveyStrataPolyLL)
+sp_survey_strata_poly<-PolySet2SpatialPolygons(survey_stret)
+sp_survey_strata_poly@proj4string<-prj4s
+for(j in 1:15){
+  for(i in 1:length(sp_survey_strata_poly@polygons[[j]]@Polygons)){
+    if (sp_survey_strata_poly@polygons[[j]]@Polygons[[i]]@hole==F) {
+    sp_survey_strata_poly@polygons[[j]]@Polygons[[i]]@hole<-T
+  }
+  if (sp_survey_strata_poly@polygons[[j]]@Polygons[[i]]@hole==T) {
+    sp_survey_strata_poly@polygons[[j]]@Polygons[[i]]@hole<-F
+  }
+}
+}
+
+sf_survey_strata_poly<-st_as_sf(sp_survey_strata_poly)
+
+library(ggplot2)
+overall_plot<-ggplot()+geom_sf(data=sf_survey_strata_poly)+geom_sf(data=sf_fixed_data)+theme_bw()
+
+#Check make sure they are pretty much the same every year
+yearly_plot<-ggplot()+geom_sf(data=sf_survey_strata_poly)+geom_sf(data=sf_fixed_data)+theme_bw()+facet_wrap(~YEAR)
+
+#What is clear from this last plot, is that the coverage is not consistent from year to year. Not entirely sure what to do about it yet, will have to think on it
+
+#Thinking about it again, it's possible that the fixed station concept is not AS big of a deal, because they are not exactly the same locations, unlike air pollution readers that literally don't move?
+#Either way, we shall discover!
+
+```
+
+```{r data-removals}
+#First, make a dataframe of number of tows a year before I remove sets that are bad
+n_frame<-data.frame(Year=c(1998:2021),n=rep(NA,length(1998:2021)))
+
+for (i in 1:nrow(n_frame)){
+  n_frame$n[i]<-length(fixed_data$YEAR[fixed_data$YEAR==n_frame$Year[i]])
+}
+
+#Now check for sets to be removed because they make no sense
+
+which(is.na(fixed_data$NUM_HOOK_HAUL))
+#These 9 tows have NA for how many hooks were hauled, which makes no sense, and every single one of them, from 2 NAFO areas (4XN and 4WL), all different stations, but all from a single trip in 2009 (J09-0308)
+
+fixed_data2<-fixed_data[-which(is.na(fixed_data$NUM_HOOK_HAUL)),]
+
+#Check if the numbers don't make sense, i.e. there are more species caught than number of hooks
+which(fixed_data2$NUM_HOOK_HAUL-fixed_data2$total_other_species-fixed_data2$total_target_species<0)
+#Mostly different years or trips, so no trends
+fixed_data3<-fixed_data2[-which(fixed_data2$NUM_HOOK_HAUL-fixed_data2$total_other_species-fixed_data2$total_target_species<0),]
+
+#Put together the number of empty hooks (including baited, unbaited, broken or missing hooks)
+fixed_data3$empty_hooks<-fixed_data3$NUM_HOOK_HAUL-fixed_data3$total_other_species-fixed_data3$total_target_species
+
+#Some tows have what I feel is an unreasonably small amount of empty hooks, might be worth taking a peek into it as a verification measure at some point, but I have no reason to move forward from that
+
+#There is a problem with 1999, so gotta look into it
+fixed_99<-subset(fixed_data3,YEAR==1999)
+#It is the year with the 6 hook thing, I am going to remove this one and see if it works afterward
+
+#Getting closer but still not working
+fixed_data3<-fixed_data3[-which(fixed_data3$empty_hooks==6),]
+# fixed_data3<-fixed_data3[-which(fixed_data3$empty_hooks==195),]
+
+sf_rem_fix_data<-st_as_sf(fixed_data3,coords=c("LONGITUDE","LATITUDE"))
+st_crs(sf_rem_fix_data)<-prj4s
+#Make into utm
+sf_rem_fix_data<-st_transform(sf_rem_fix_data,utm.prj4s)
+sf_rem_fix_data<-sf_rem_fix_data[-c(29:33),]
+
+#Lets try removing 1998-1999, see what happens
+sf_rem_fix_data<-subset(sf_rem_fix_data,YEAR > 1999)
+
+#Now there are a few where soak time is NA, so have to remove those
+sf_rem_fix_data<-sf_rem_fix_data[-which(is.na(sf_rem_fix_data$SOAKMINP3P1)),]
+
+for (i in 1:nrow(n_frame)){
+  n_frame$fix_n[i]<-length(sf_rem_fix_data$YEAR[sf_rem_fix_data$YEAR==n_frame$Year[i]])
+}
+
+# Logit function
+logitp=function(p){log(p/(1-p))}
+# Inverse logist function
+logitpi=function(t){exp(t)/(1+exp(t))}
+
+factor_into_numbers<-data.frame(fact=c(unique(sf_rem_fix_data$CFV),unique(rand_data$CFV)[!(unique(rand_data$CFV) %in% unique(sf_rem_fix_data$CFV))]),number_fact=as.numeric(as.factor(c(unique(sf_rem_fix_data$CFV),unique(rand_data$CFV)[!(unique(rand_data$CFV) %in% unique(sf_rem_fix_data$CFV))]))))
+colnames(factor_into_numbers)<-c("CFV","Vess_fact")
+
+rand_data<-left_join(rand_data,factor_into_numbers)
+sf_rem_fix_data<-left_join(sf_rem_fix_data,factor_into_numbers)
+
+dat_list_for_comb<-list()
+for (i in 2000:2021){
+  dat_list_for_comb[[i-1999]]<-subset(sf_rem_fix_data,YEAR==i)
+}
+
+```
+
+```{r strat-data}
+
+# The halibut data for 2017
+data2017 = rand_data[which(rand_data$YEAR == 2017), ]
+dim(data2017)
+# Drop the stations (523 and 525) with hook = 30
+surv_not30 = which(data2017$total_sampled == 30)
+data2017=data2017[-c(surv_not30),]
+which(data2017$hooks_sampled == 30)
+dim(data2017)
+# Drop Stations with total number of non-target fish 
+# with greater than total number of hooks
+g_index=which(data2017$NUM_HOOK_HAUL-data2017$total_other_species-data2017$total_target_species<0)
+data2017=data2017[-g_index, ]
+which(data2017$NUM_HOOK_HAUL-data2017$total_other_species-data2017$total_target_species<0)
+dim(data2017)
+# Drop Stations with 
+# (total number of non-target species - number of non-target species from sampled hooks < 0)
+g_index2=which(data2017$total_other_species-data2017$other_species<0)
+data2017=data2017[-c(g_index2),]
+which(data2017$total_other_species-data2017$other_species<0)
+dim(data2017)
+# Drop Stations with 
+# (total number of target species - number of target species from sampled hooks < 0)
+g_index3=which(data2017$total_target_species-data2017$target_species<0)
+data2017=data2017[-c(g_index3),]
+which(data2017$total_target_species-data2017$target_species<0)
+dim(data2017)
+# Drop Stations
+g_index4=which(data2017$NUM_HOOK_HAUL-data2017$total_sampled-data2017$total_target_species-
+                 data2017$target_species-data2017$total_other_species-data2017$other_species<0)
+data2017=data2017[-c(g_index4),]
+which(data2017$NUM_HOOK_HAUL-data2017$total_sampled-data2017$total_target_species-
+        data2017$target_species-data2017$total_other_species-data2017$other_species<0)
+dim(data2017)
+
+# For 300 hooks
+# Empty unbaited = Empty unbaited + missing hooks + broken hooks 
+data2017$empty_unb=data2017$empty_unbaited+data2017$missing_hook+data2017$broken_hook
+# Check
+data2017$total_sampled-data2017$empty_baited-data2017$target_species-data2017$other_species-data2017$empty_unb
+st_17_300=data2017$SOAKMINP3P1
+
+# For 700 hooks
+data2017$target_species_700=data2017$total_target_species-data2017$target_species
+data2017$other_species_700=data2017$total_other_species-data2017$other_species
+data2017$nbe_700=data2017$NUM_HOOK_HAUL-data2017$total_sampled-data2017$target_species_700-data2017$other_species_700
+
+data2017<-st_as_sf(data2017,coords=c("LONGITUDE","LATITUDE"),crs=prj4s) %>% st_transform(utm.prj4s)
+
+#2018
+data2018 = rand_data[which(rand_data$YEAR == 2018), ]
+dim(data2018)
+
+# Drop Stations with total number of non-target fish 
+# with greater than total number of hooks
+g_index_18=which(data2018$NUM_HOOK_HAUL-data2018$total_other_species-data2018$total_target_species<0)
+g_index_18
+# Drop Stations with 
+# (total number of non-target species - number of non-target species from sampled hooks < 0)
+g_index2_18=which(data2018$total_other_species-data2018$other_species<0)
+data2018=data2018[-c(g_index2_18),]
+which(data2018$total_other_species-data2018$other_species<0)
+dim(data2018)
+# Drop Stations with 
+# (total number of target species - number of target species from sampled hooks < 0)
+g_index3_18=which(data2018$total_target_species-data2018$target_species<0)
+g_index3_18
+# Drop Stations
+g_index4_18=which(data2018$NUM_HOOK_HAUL-data2018$total_sampled-data2018$total_target_species
+               -data2018$target_species-data2018$total_other_species-data2018$other_species<0)
+data2018=data2018[-c(g_index4_18),]
+which(data2018$NUM_HOOK_HAUL-data2018$total_sampled-data2018$total_target_species
+               -data2018$target_species-data2018$total_other_species
+               -data2018$other_species<0)
+dim(data2018)
+
+# For 300 hooks
+# Empty unbaited = Empty unbaited + missing hooks + broken hooks 
+data2018$empty_unb=data2018$empty_unbaited+data2018$missing_hook+data2018$broken_hook
+# Check
+data2018$total_sampled-data2018$empty_baited-data2018$target_species-data2018$other_species-data2018$empty_unb
+st_18_300=data2018$SOAKMINP3P1
+
+# For 700 hooks
+data2018$target_species_700=data2018$total_target_species-data2018$target_species
+data2018$other_species_700=data2018$total_other_species-data2018$other_species
+data2018$nbe_700=data2018$NUM_HOOK_HAUL-data2018$total_sampled-data2018$target_species_700-data2018$other_species_700
+
+data2018<-st_as_sf(data2018,coords=c("LONGITUDE","LATITUDE"),crs=prj4s) %>% st_transform(utm.prj4s)
+
+data2019 = rand_data[which(rand_data$YEAR == 2019), ]
+dim(data2019)
+# Five stations are with non-integer label
+stat_error = sapply(data2019$STATION, function(i) i == as.integer(i))
+stat_error_index = which(stat_error == "FALSE")
+stat_error_index
+data2019[stat_error_index,]
+data2019[stat_error_index,]$STATION
+data2019[stat_error_index,]$STATION = as.integer(data2019[stat_error_index,]$STATION)
+
+# Drop Stations with total number of non-target fish 
+# with greater than total number of hooks
+g_index_19=which(data2019$NUM_HOOK_HAUL-data2019$total_other_species-data2019$total_target_species<0)
+data2019=data2019[-c(g_index_19),]
+which(data2019$NUM_HOOK_HAUL-data2019$total_other_species-data2019$total_target_species<0)
+dim(data2019)
+# Drop Stations with 
+# (total number of non-target species - number of non-target species from sampled hooks < 0)
+g_index2_19=which(data2019$total_other_species-data2019$other_species<0)
+data2019=data2019[-c(g_index2_19),]
+which(data2019$total_other_species-data2019$other_species<0)
+dim(data2019)
+# Drop Stations with 
+# (total number of target species - number of target species from sampled hooks < 0)
+g_index3_19=which(data2019$total_target_species-data2019$target_species<0)
+g_index3_19
+# Drop Stations
+g_index4_19=which(data2019$NUM_HOOK_HAUL-data2019$total_sampled-data2019$total_target_species-
+                    data2019$target_species-data2019$total_other_species-data2019$other_species<0)
+g_index4_19
+
+# For 300 hooks
+# Empty unbaited = Empty unbaited + missing hooks + broken hooks 
+data2019$empty_unb=data2019$empty_unbaited+data2019$missing_hook+data2019$broken_hook
+# Check
+data2019$total_sampled-data2019$empty_baited-data2019$target_species-data2019$other_species-data2019$empty_unb
+st_19_300=data2019$SOAKMINP3P1
+
+# For 700 hooks
+data2019$target_species_700=data2019$total_target_species-data2019$target_species
+data2019$other_species_700=data2019$total_other_species-data2019$other_species
+data2019$nbe_700=data2019$NUM_HOOK_HAUL-data2019$total_sampled-data2019$target_species_700-data2019$other_species_700
+
+data2019<-st_as_sf(data2019,coords=c("LONGITUDE","LATITUDE"),crs=prj4s) %>% st_transform(utm.prj4s)
+
+# The halibut data for 2020
+data2020 = rand_data[which(rand_data$YEAR == 2020), ]
+dim(data2020)
+
+#None of the tows have less than 30, the lowest is 180
+unique(data2020$total_sampled)
+#Compared to 2017, alll above 270 except for the 30
+#Compared to 2018, there is atleast 1 180 that is used, but I will absolutely have to check that there are not stations where there are more fish than hooks
+#Same for 2019
+
+#Check and remove those bad stations
+# Drop Stations with total number of non-target fish 
+# with greater than total number of hooks
+#There are none, easy then
+g_index=which(data2020$NUM_HOOK_HAUL-data2020$total_other_species-data2020$total_target_species<0)
+# data2020=data2020[-g_index, ]
+which(data2020$NUM_HOOK_HAUL-data2020$total_other_species-data2020$total_target_species<0)
+dim(data2020)
+
+# Drop Stations with 
+# (total number of non-target species - number of non-target species from sampled hooks < 0)
+#There are 3
+g_index2=which(data2020$total_other_species-data2020$other_species<0)
+data2020=data2020[-c(g_index2),]
+which(data2020$total_other_species-data2020$other_species<0)
+dim(data2020)
+
+# Drop Stations with 
+# (total number of target species - number of target species from sampled hooks < 0)
+#none!
+g_index3=which(data2020$total_target_species-data2020$target_species<0)
+# data2020=data2020[-c(g_index3),]
+which(data2020$total_target_species-data2020$target_species<0)
+dim(data2020)
+
+# Drop Stations
+#none for this too!
+g_index4=which(data2020$NUM_HOOK_HAUL-data2020$total_sampled-data2020$total_target_species-
+                 data2020$target_species-data2020$total_other_species-data2020$other_species<0)
+# data2020=data2020[-c(g_index4),]
+which(data2020$NUM_HOOK_HAUL-data2020$total_sampled-data2020$total_target_species-
+        data2020$target_species-data2020$total_other_species-data2020$other_species<0)
+dim(data2020)
+
+# For 300 hooks
+# Empty unbaited = Empty unbaited + missing hooks + broken hooks 
+data2020$empty_unb=data2020$empty_unbaited+data2020$missing_hook+data2020$broken_hook
+# Check
+data2020$total_sampled-data2020$empty_baited-data2020$target_species-data2020$other_species-data2020$empty_unb
+st_20_300=data2020$SOAKMINP3P1
+
+# For 700 hooks
+data2020$target_species_700=data2020$total_target_species-data2020$target_species
+data2020$other_species_700=data2020$total_other_species-data2020$other_species
+data2020$nbe_700=data2020$NUM_HOOK_HAUL-data2020$total_sampled-data2020$target_species_700-data2020$other_species_700
+
+data2020<-st_as_sf(data2020,coords=c("LONGITUDE","LATITUDE"),crs=prj4s) %>% st_transform(utm.prj4s)
+
+data2021 = rand_data[which(rand_data$YEAR == 2021), ]
+dim(data2021)
+
+#Some NAs, remove
+data2021<-data2021[!is.na(data2021$total_sampled),]
+
+#None of the tows have less than 30, the lowest is 180
+unique(data2021$total_sampled)
+#Compared to 2017, alll above 270 except for the 30
+#Compared to 2018, there is atleast 1 180 that is used, but I will absolutely have to check that there are not stations where there are more fish than hooks
+#Same for 2019
+
+#Check and remove those bad stations
+# Drop Stations with total number of non-target fish 
+# with greater than total number of hooks
+#There are none, easy then
+g_index=which(data2021$NUM_HOOK_HAUL-data2021$total_other_species-data2021$total_target_species<0)
+# data2021=data2021[-g_index, ]
+which(data2021$NUM_HOOK_HAUL-data2021$total_other_species-data2021$total_target_species<0)
+dim(data2021)
+
+# Drop Stations with 
+# (total number of non-target species - number of non-target species from sampled hooks < 0)
+
+g_index2=which(data2021$total_other_species-data2021$other_species<0)
+data2021=data2021[-c(g_index2),]
+which(data2021$total_other_species-data2021$other_species<0)
+dim(data2021)
+
+# Drop Stations with 
+# (total number of target species - number of target species from sampled hooks < 0)
+#none!
+g_index3=which(data2021$total_target_species-data2021$target_species<0)
+# data2021=data2021[-c(g_index3),]
+which(data2021$total_target_species-data2021$target_species<0)
+dim(data2021)
+
+# Drop Stations
+#none for this too!
+g_index4=which(data2021$NUM_HOOK_HAUL-data2021$total_sampled-data2021$total_target_species-
+                 data2021$target_species-data2021$total_other_species-data2021$other_species<0)
+# data2021=data2021[-c(g_index4),]
+which(data2021$NUM_HOOK_HAUL-data2021$total_sampled-data2021$total_target_species-
+        data2021$target_species-data2021$total_other_species-data2021$other_species<0)
+dim(data2021)
+
+# For 300 hooks
+# Empty unbaited = Empty unbaited + missing hooks + broken hooks 
+data2021$empty_unb=data2021$empty_unbaited+data2021$missing_hook+data2021$broken_hook
+# Check
+data2021$total_sampled-data2021$empty_baited-data2021$target_species-data2021$other_species-data2021$empty_unb
+st_21_300=data2021$SOAKMINP3P1
+
+# For 700 hooks
+data2021$target_species_700=data2021$total_target_species-data2021$target_species
+data2021$other_species_700=data2021$total_other_species-data2021$other_species
+data2021$nbe_700=data2021$NUM_HOOK_HAUL-data2021$total_sampled-data2021$target_species_700-data2021$other_species_700
+
+data2021<-st_as_sf(data2021,coords=c("LONGITUDE","LATITUDE"),crs=prj4s) %>% st_transform(utm.prj4s)
+
+strat_dat_comb<-list()
+for (i in 2000:2021){
+  strat_dat_comb[[i-1999]]<-NULL
+  if(i==2017) strat_dat_comb[[i-1999]]<-data2017
+  if(i==2018) strat_dat_comb[[i-1999]]<-data2018
+  if(i==2019) strat_dat_comb[[i-1999]]<-data2019
+  if(i==2020) strat_dat_comb[[i-1999]]<-data2020
+  if(i==2021) strat_dat_comb[[i-1999]]<-data2021
+}
+
+```
+
+```{r combine}
+
+n_strat<-sum(c(nrow(data2017),nrow(data2018),nrow(data2019),nrow(data2020),nrow(data2021)))
+n_strats_sep<-c(nrow(data2017),nrow(data2018),nrow(data2019),nrow(data2020),nrow(data2021))
+n_fixed<-nrow(sf_rem_fix_data)
+
+#Setting up H_i and H_j
+H_j<-rep(NA,n_strat+n_fixed)
+H_i<-rep(NA,n_strat)
+vess_id<-rep(NA,n_strat+n_fixed)
+
+n_t<-length(2000:2021)
+n_k<-3
+n_k2<-4
+
+main_n2<-rep(NA,n_t)
+for (i in 1:n_t){
+  if (i < 18) main_n2[i]<-0
+  else main_n2[i]<-n_strats_sep[i-17]
+}
+
+main_n<-rep(NA,n_t)
+for (i in 1:n_t){
+  if (i<18) main_n[i]<-n_frame$fix_n[i+2]
+  else main_n[i]<-n_frame$fix_n[i+2]+main_n2[i]
+}
+
+sub_n_frame<-n_frame[-c(1,2),]
+
+Yearly_indices<-data.frame(year=c(2000:2021),
+                           ind_1=c(1,217,407,606,794,1009,1173,1336,1577,1858,2063,2278,2495,2712,2945,3177,3409,3636,3875,4125,4346,4593),
+                           ind_2=c(216,406,605,793,1008,1172,1335,1576,1857,2062,2277,2494,2711,2944,3176,3408,3635,3874,4124,4345,4592,4821))
+ind1<-Yearly_indices$ind_1
+ind2<-Yearly_indices$ind_2
+
+soaky<-rep(NA,sum(main_n))
+
+avg_weights<-rep(NA,sum(main_n))
+
+locations<-matrix(nrow=sum(main_n),ncol=2)
+
+big_A<-matrix(nrow=sum(main_n),ncol=n_k)
+for (i in 2000:2021){
+  if (i <2017){
+    big_A[c((ind1[i-1999]):ind2[i-1999]),]<-as.matrix(data.frame(dat_list_for_comb[[i-1999]]$total_target_species,dat_list_for_comb[[i-1999]]$total_other_species,dat_list_for_comb[[i-1999]]$empty_hooks))
+    H_j[c((ind1[i-1999]):ind2[i-1999])]<-rep(0,length(c((main_n[i-1999]):main_n[i-1999])))
+    vess_id[c((ind1[i-1999]):ind2[i-1999])]<-dat_list_for_comb[[i-1999]]$Vess_fact
+    soaky[c((ind1[i-1999]):ind2[i-1999])]<-dat_list_for_comb[[i-1999]]$SOAKMINP3P1
+    locations[c((ind1[i-1999]):ind2[i-1999]),]<-st_coordinates(dat_list_for_comb[[i-1999]])
+    avg_weights[c((ind1[i-1999]):ind2[i-1999])]<-dat_list_for_comb[[i-1999]]$avg_weight
+  } else if (i>2016){
+    big_A[c(ind1[i-1999]:(ind1[i-1999]+sub_n_frame$fix_n[i-1999]-1)),]<-as.matrix(data.frame(dat_list_for_comb[[i-1999]]$total_target_species,dat_list_for_comb[[i-1999]]$total_other_species,dat_list_for_comb[[i-1999]]$empty_hooks))
+    H_j[c((ind1[i-1999]):(ind1[i-1999]+sub_n_frame$fix_n[i-1999]-1))]<-rep(0,length(c((ind1[i-1999]):(ind1[i-1999]+sub_n_frame$fix_n[i-1999]-1))))
+    vess_id[c((ind1[i-1999]):(ind1[i-1999]+sub_n_frame$fix_n[i-1999]-1))]<-dat_list_for_comb[[i-1999]]$Vess_fact
+    soaky[c((ind1[i-1999]):(ind1[i-1999]+sub_n_frame$fix_n[i-1999]-1))]<-dat_list_for_comb[[i-1999]]$SOAKMINP3P1
+    avg_weights[c((ind1[i-1999]):(ind1[i-1999]+sub_n_frame$fix_n[i-1999]-1))]<-dat_list_for_comb[[i-1999]]$avg_weight
+    locations[c((ind1[i-1999]):(ind1[i-1999]+sub_n_frame$fix_n[i-1999]-1)),]<-st_coordinates(dat_list_for_comb[[i-1999]])
+    big_A[c((ind1[i-1999]+sub_n_frame$fix_n[i-1999]):ind2[i-1999]),]<-as.matrix(data.frame(strat_dat_comb[[i-1999]]$target_species_700,strat_dat_comb[[i-1999]]$other_species_700,strat_dat_comb[[i-1999]]$nbe_700))
+  H_j[c((ind1[i-1999]+sub_n_frame$fix_n[i-1999]):ind2[i-1999])]<-rep(1,length(c((ind1[i-1999]+sub_n_frame$fix_n[i-1999]):ind2[i-1999])))
+  vess_id[c((ind1[i-1999]+sub_n_frame$fix_n[i-1999]):ind2[i-1999])]<-strat_dat_comb[[i-1999]]$Vess_fact
+  soaky[c((ind1[i-1999]+sub_n_frame$fix_n[i-1999]):ind2[i-1999])]<-strat_dat_comb[[i-1999]]$avg_weight
+  avg_weights[c((ind1[i-1999]+sub_n_frame$fix_n[i-1999]):ind2[i-1999])]<-strat_dat_comb[[i-1999]]$SOAKMINP3P1
+  locations[c((ind1[i-1999]+sub_n_frame$fix_n[i-1999]):ind2[i-1999]),]<-st_coordinates(strat_dat_comb[[i-1999]])
+  }
+}
+H_i<-which(H_j==1)-1
+vess_id<-vess_id-1
+
+spool<-sqrt(((length(locations[,1])-1)*var(locations[,1])+(length(locations[,2])-1)*var(locations[,2]))/(length(locations[,1])+length(locations[,2])))
+locations[,1]<-(locations[,1]-median(locations[,1]))/spool
+locations[,2]<-(locations[,2]-median(locations[,2]))/spool
+
+
+big_H<-as.matrix(data.frame(c(data2017$empty_baited,data2018$empty_baited,data2019$empty_baited,data2020$empty_baited,data2021$empty_baited),c(data2017$target_species,data2018$target_species,data2019$target_species,data2020$target_species,data2021$target_species),c(data2017$other_species,data2018$other_species,data2019$other_species,data2020$other_species,data2021$other_species),c(data2017$empty_unb,data2018$empty_unb,data2019$empty_unb,data2020$empty_unb,data2021$empty_unb)))
+
+#Look up at which vessels are only present in single years
+berple<-rbind(data2017,data2018,data2019,data2020,data2021)
+n_years_vess<-rep(NA,87)
+for (i in 1:87){
+  garth<-subset(sf_rem_fix_data,Vess_fact == i)
+  garth2<-subset(berple,Vess_fact==i)
+  n_years_vess[i]<-length(unique(garth$YEAR))+length(unique(garth2$YEAR))
+}
+
+#Look at how many stations in a given year for each year
+n_vess_year<-rep(NA,22)
+for (i in 1:22){
+  garth3<-subset(sf_rem_fix_data,YEAR==i+1999)
+  garth4<-subset(berple,YEAR==i+1999)
+  n_vess_year[i]<-length(unique(garth3$Vess_fact))+length(unique(garth4$Vess_fact))
+}
+
+n_tows_years<-matrix(nrow=87,ncol=22)
+for (i in 1:87){
+  for (j in 1:22){
+    n_tows_years[i,j]<-nrow(subset(sf_rem_fix_data,YEAR==j+1999 & Vess_fact==i))+nrow(subset(berple,YEAR==j+1999 & Vess_fact==i))
+  }
+}
+
+#This gives me some idea of why this is happening, and it's a combination of many being only present in some years, most of them having very few (obviously not enough) tows to be estimable, so we end up with the 15 that were identified when running the model
+ident_fact<-c(2,4,6,8,10,11,14,22,23,24,25,28,30,34,40)
+
+
+#Changing the vessel IDs to be NA if not in more than one year and reorganize size
+# for (i in 1:length(vess_id)){
+#   if(!(vess_id[i] %in% ident_fact)) vess_id[i]<-NA
+# }
+# for (i in 1:length(vess_id)){
+#   if (vess_id[i] %in% ident_fact) vess_id[i]<-which(ident_fact==vess_id[i])-1
+# }
+
+#Setup matrix for different vessel effects
+
+```
+
+
+```{r fit-model}
+
+# vess_id[is.na(vess_id)]<--1
+
+data<-list(A=big_A,H=big_H,H_i=H_i,H_j=H_j,vess_id=vess_id,s=soaky,locations=locations,n_t=n_t,n=main_n,n_k=3,n2=main_n2,n_k2=4)
+
+par_list<-list()
+    
+# Initial values for lambda.t, lambda.nt and pnt
+# Use the estimated values as the starting points
+par_list$betat = -13
+par_list$betant = -8
+# par_list$theta = logitp(0.8795768)
+par_list$theta = 0
+#Random effect of time
+par_list$rand_t = rep(-13,data$n_t)
+par_list$rand_nt = rep(-8,data$n_t)
+# Random field
+par_list$omegat =  rep(0,nrow(big_A))
+par_list$omegant =  rep(0,nrow(big_A))
+#Vessel effect
+par_list$vess_eff_t = rep(0,length(unique(vess_id)))
+par_list$vess_eff_nt = rep(0,length(unique(vess_id)))
+# par_list$vess_eff_t = rep(0,length(unique(ident_fact)))
+# par_list$vess_eff_nt = rep(0,length(unique(ident_fact)))
+# Smoothness parameter 
+par_list$lognut = 0
+par_list$lognunt = 0
+# Range parameter 
+# par_list$logPhit = -3
+# par_list$logPhint = -1
+par_list$logPhit = -1
+par_list$logPhint = -1
+# Variance
+par_list$logSigmat = 0
+par_list$logSigmant = 0
+#Vess effect sigmas
+par_list$log_sigma_vess_t = 0
+par_list$log_sigma_vess_nt = 0
+#Rand intercept sigmas
+par_list$log_sigma_rand_t = 0
+par_list$log_sigma_rand_nt = 0
+#Rand intercept means
+par_list$mean_rand_t = -12
+par_list$mean_rand_nt = -8
+
+par_list$log_H_aniso = c(0,0)
+
+# map<-list(lognut=factor(NA),lognunt=factor(NA))
+map<-list(lognut=factor(NA),lognunt=factor(NA),log_H_aniso=as.factor(c(NA,NA)))
+
+random<-c("omegat","omegant","rand_t","rand_nt","vess_eff_t","vess_eff_nt")
+library(optimr)
+
+
+obj<-MakeADFun(data,par_list,random=random,DLL="spat_temp_both_datasets",map=map,silent=F)
+Opt<-optimx::optimr(obj$par,obj$fn,obj$gr,control=list(maxit=100000),method="nlminb")
+rep<-sdreport(obj)
+Report<-obj$report()
+
+save(obj,Opt,rep,Report,file="test_no_aniso.RData")
+# save(obj,Opt,rep,Report,file="good_rand_walk_run.RData")
+# save(obj,Opt,rep,Report,file="both_strat_fixed_run1.RData")
+# save(obj,Opt,rep,Report,file="both_strat_fixed_ldat_se.RData")
+# save(obj,Opt,rep,Report,file="both_strat_fixed_ldat_se_1phi.RData")
+# save(obj,Opt,rep,Report,file="both_strat_fixed_ldat_se_1phi_vessel_effect.RData")
+# save(obj,Opt,rep,Report,file="both_strat_fixed_ldat_se_1phi_norm_vessel_effect.RData")
+# save(obj,Opt,rep,Report,file="both_strat_fixed_ldat_se_manyphint.RData")
+# save(obj,Opt,rep,Report,file="both_strat_fixed_ldat_se_manyphint_varnt.RData")
+
+load("good_rand_walk_run.RData")
+rep_both_all<-rep
+Report_both_all<-Report
+
+#VERIFY NO DIFFERENCE BETWEEN NO ANISO AND OLD FIT
+
+# rss = function(V) sqrt(sum(V[1]^2+V[2]^2))
+# # Eigen_B<-eigen(Report$H_aniso)
+# Eigen_B<-eigen(matrix(c(0,1,1,0),ncol=2))
+# Range=(3*rep$value[which(names(rep$value)=="phit")]*spool_17)/1000
+# Major_B<-Eigen_B$vectors[,1]*Eigen_B$values[1] * Range
+# Minor_B<-Eigen_B$vectors[,2]*Eigen_B$values[2] * Range
+# Range_B = 1.1 * c(-1,1) * max(abs( cbind(Major_B,Minor_B) ))
+# plot( 1, type="n", xlim=c(-450,450), ylim=c(-450,450), xlab="", ylab="")
+# shape::plotellipse( rx=rss(Major_B), ry=rss(Minor_B),
+#                     angle=-1*(atan(Major_B[1]/Major_B[2])/(2*pi)*360-90),
+#                     lcol=c("black")[1], lty=c("solid")[1])
+# mtext(side=1, outer=FALSE, line=2, text="Eastings (km)")
+# mtext(side=2, outer=FALSE, line=2, text="Northings (km)")
+
+```
+
+
+```{r plets}
+pnt<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+# aniso_1<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+# aniso_2<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+phit<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+phint<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+vart<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+varnt<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+rand_t<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+rand_nt<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+for (i in c(1:22)){
+  pnt[i,]<-c(rep$value[1],rep$sd[1])
+  # aniso_1[i,]<-summary(rep)[2,]
+  # aniso_2[i,]<-summary(rep)[3,]
+  phit[i,]<-c(rep$value[which(names(rep$value)=="phit")],rep$sd[which(names(rep$value)=="phit")])
+  phint[i,]<-c(rep$value[which(names(rep$value)=="phint")],rep$sd[which(names(rep$value)=="phint")])
+  vart[i,]<-c(rep$value[which(names(rep$value)=="vart")],rep$sd[which(names(rep$value)=="vart")])
+  varnt[i,]<-c(rep$value[which(names(rep$value)=="varnt")],rep$sd[which(names(rep$value)=="varnt")])
+  rand_t[i,]<-c(rep$value[which(names(rep$value)=="rand_t")][i],rep$sd[which(names(rep$value)=="rand_t")][i])
+    rand_nt[i,]<-c(rep$value[which(names(rep$value)=="rand_nt")][i],rep$sd[which(names(rep$value)=="rand_nt")][i])
+}
+vess_effect_t<-data.frame(val=rep(NA,length(unique(vess_id))),sd=rep(NA,length(unique(vess_id))))
+vess_effect_nt<-data.frame(val=rep(NA,length(unique(vess_id))),sd=rep(NA,length(unique(vess_id))))
+for (i in 1:length(unique(vess_id))){
+  vess_effect_t[i,]<-c(rep$value[which(names(rep$value)=="vess_eff_t")][i],rep$sd[which(names(rep$value)=="vess_eff_t")][i])
+  vess_effect_nt[i,]<-c(rep$value[which(names(rep$value)=="vess_eff_nt")][i],rep$sd[which(names(rep$value)=="vess_eff_nt")][i])
+}
+
+rand_plot<-ggplot()+
+  geom_line(data=rand_t,aes(x=2000:2021,y=val),col="red")+
+  geom_point(data=rand_t,aes(x=2000:2021,y=val),col="red")+
+  geom_ribbon(data=rand_t,aes(x=2000:2021,ymin=val-2*sd,ymax=val+2*sd),col="red",fill="red",alpha=0.2)+
+  geom_line(data=rand_nt,aes(x=2000:2021,y=val),col="blue")+
+  geom_point(data=rand_nt,aes(x=2000:2021,y=val),col="blue")+
+  geom_ribbon(data=rand_nt,aes(x=2000:2021,ymin=val-2*sd,ymax=val+2*sd),col="blue",fill="blue",alpha=0.2)+
+  theme_bw()+
+  geom_text(aes(x=c(2002,2002),y=c(-10.25,-14.25),label=c("rand_nt","rand_t")))+
+  xlab("Year")+ylab("Estimated Value")
+# ggsave(filename="rand_plot_both_data.png",rand_plot)
+
+
+# phi_plot<-ggplot()+
+#   geom_line(data=phit,aes(x=2000:2021,y=val),col="red")+
+#   geom_point(data=phit,aes(x=2000:2021,y=val),col="red")+
+#   geom_ribbon(data=phit,aes(x=2000:2021,ymin=val-2*sd,ymax=val+2*sd),col="red",fill="red",alpha=0.2)+
+#   geom_line(data=phint,aes(x=2000:2021,y=val),col="blue")+
+#   geom_point(data=phint,aes(x=2000:2021,y=val),col="blue")+
+#   geom_ribbon(data=phint,aes(x=2000:2021,ymin=val-2*sd,ymax=val+2*sd),col="blue",fill="blue",alpha=0.2)+
+#   theme_bw()+
+#   geom_text(aes(x=c(2013,2013),y=c(0.14,0.12),label=c("phi_nt=blue","phi_t=red")))+
+#   xlab("Year")+ylab("Estimated Value")
+# ggsave(filename="phi_plot_both_data.png",phi_plot)
+
+bid = read.csv("blockIDkey.csv", header = T)
+loc_id = cbind(bid$lon.DecDeg, bid$lat.DecDeg)
+# Plot Block ID
+plot(loc_id, xlab="Long", ylab="Lat", main="blockIDkey", pch=20)
+
+load("good_bound.RData")
+make_20<-st_as_sf(tf_bound_a_pos22,coords=c("long","lat"))
+st_crs(make_20)<-CRS("+init=epsg:32619")
+make_20<-st_transform(make_20,utm.prj4s)
+
+library(gissr)
+library(deldir)
+library(spatstat)
+library(alphahull)
+
+pp_list<-list()
+diri_list<-list()
+for (i in c(2000:2021)){
+  temp<-subset(sf_rem_fix_data,YEAR==i)
+  temp_dist<-st_coordinates(temp)
+  
+  pp_list[[i-1999]]=ppp(temp_dist[,1], temp_dist[,2], window=owin(poly=list(x=st_coordinates(make_20)[,1],y=st_coordinates(make_20)[,2])))
+          
+  diri_list[[i-1999]] = dirichlet(pp_list[[i-1999]])
+}
+
+library(raster)
+#What if I do the dumb way?
+sf_loc_id<-st_as_sf(as.data.frame(loc_id),coords=c("V1","V2"),crs=prj4s) %>% 
+  st_transform(utm.prj4s)
+station_IDs<-list()
+for (i in c(1:length(diri_list))){
+  temp<-subset(sf_rem_fix_data,YEAR==(i+1999))
+  temp_dist<-st_coordinates(temp)
+  
+  temp_distance<-pointDistance(sf_loc_id,temp_dist,lonlat=F)
+  
+  station_ID<-c()
+  
+  for (j in 1:length(st_coordinates(sf_loc_id)[,1])) {
+  station_ID<-c(station_ID,which(temp_distance[j,]==min(temp_distance[j,])))
+  }
+  
+   station_IDs[[i]]<-station_ID
+  
+}
+
+
+# Area
+area_list<-list()
+for (i in c(1:length(diri_list))){
+  wts = c()
+  for (j in 1:length(Report$ldat[Yearly_indices[i,]$ind_1:Yearly_indices[i,]$ind_2])){
+    temp_area<-length(which(station_IDs[[i]]==j))*4
+    wts[j]<-temp_area
+  }
+  # Target
+  dweight_ave_t = sum((Report$ldat[Yearly_indices[i,]$ind_1:Yearly_indices[i,]$ind_2])*wts)/sum(wts)
+  weighted_t<-dweight_ave_t
+  # Standard error calculation
+  wts = as.matrix(wts)
+  # wi/sum(wi)
+  wts_2 = wts/(sum(wts))
+  # covariance matrix for estimated lambda t
+  cov = rep$cov
+  cov_t = cov[(Yearly_indices[i,]$ind_1+49):(Yearly_indices[i,]$ind_2+49), (Yearly_indices[i,]$ind_1+49):(Yearly_indices[i,]$ind_2+49)]
+  
+  # Standard error for Dirichlet method 
+  se2_dir_t = t(wts_2)%*%cov_t%*%wts_2
+  se_t<-se2_dir_t
+  # Non-target
+  dweight_ave_nt = sum((Report$ldant[Yearly_indices[i,]$ind_1:Yearly_indices[i,]$ind_2])*wts)/sum(wts)
+  weighted_nt<-dweight_ave_nt
+  # covariance matrix for estimated lambda t
+  cov_nt = cov[(tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i,]$ind_1+49):(tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i,]$ind_2+49), (tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i,]$ind_1+49) :(tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i,]$ind_2+49)]
+  # Standard error for Dirichlet method 
+  se2_dir_nt = t(wts_2)%*%cov_nt%*%wts_2
+  se_nt<-se2_dir_nt
+  
+  area_list[[i]]<-data.frame(weighted_t,sqrt(se_t),weighted_nt,sqrt(se_nt))
+}
+
+weighted_avgs_frame<-data.frame(w_t=rep(NA,22),se_t=rep(NA,22),
+                                w_nt=rep(NA,22),se_nt=rep(NA,22))
+for (i in c(1:22)){
+  weighted_avgs_frame$w_t[i]<-area_list[[i]]$weighted_t
+  weighted_avgs_frame$se_t[i]<-area_list[[i]]$sqrt.se_t.
+  weighted_avgs_frame$w_nt[i]<-area_list[[i]]$weighted_nt
+  weighted_avgs_frame$se_nt[i]<-area_list[[i]]$sqrt.se_nt.
+}
+
+w_lamb_t<-ggplot(data=weighted_avgs_frame)+
+  geom_point(aes(x=2000:2021,y=w_t),col="red")+
+  geom_line(aes(x=2000:2021,y=w_t),col="red")+
+  geom_ribbon(aes(x=2000:2021,ymax=w_t+2*se_t,ymin=w_t-2*se_t),fill="red",alpha=0.2)+
+  theme_bw()
+
+w_lamb_nt<-ggplot(data=weighted_avgs_frame)+
+  geom_point(aes(x=2000:2021,y=w_nt),col="blue")+
+  geom_line(aes(x=2000:2021,y=w_nt),col="blue")+
+  geom_ribbon(aes(x=2000:2021,ymax=w_nt+2*se_nt,ymin=w_nt-2*se_nt),fill="blue",alpha=0.2)+
+  theme_bw()
+
+# w_lamb_t2<-ggplot()+
+#   geom_point(data=weighted_avgs_frame,aes(x=2000:2021,y=w_t),col="red")+
+#   geom_line(data=weighted_avgs_frame,aes(x=2000:2021,y=w_t),col="red")+
+#   geom_ribbon(data=weighted_avgs_frame,aes(x=2000:2021,ymax=w_t+2*se_t,ymin=w_t-2*se_t),fill="red",alpha=0.2)+
+#     geom_point(data=weighted_avgs_frame_no_aniso,aes(x=2000:2021,y=w_t),col="blue")+
+#   geom_line(data=weighted_avgs_frame_no_aniso,aes(x=2000:2021,y=w_t),col="blue")+
+#   geom_ribbon(data=weighted_avgs_frame_no_aniso,aes(x=2000:2021,ymax=w_t+2*se_t,ymin=w_t-2*se_t),fill="blue",alpha=0.2)+
+#   theme_bw()
+# 
+# w_lamb_nt2<-ggplot()+
+#   geom_point(data=weighted_avgs_frame,aes(x=2000:2021,y=w_nt),col="red")+
+#   geom_line(data=weighted_avgs_frame,aes(x=2000:2021,y=w_nt),col="red")+
+#   geom_ribbon(data=weighted_avgs_frame,aes(x=2000:2021,ymax=w_nt+2*se_nt,ymin=w_nt-2*se_nt),fill="red",alpha=0.2)+
+#     geom_point(data=weighted_avgs_frame_no_aniso,aes(x=2000:2021,y=w_nt),col="blue")+
+#   geom_line(data=weighted_avgs_frame_no_aniso,aes(x=2000:2021,y=w_nt),col="blue")+
+#   geom_ribbon(data=weighted_avgs_frame_no_aniso,aes(x=2000:2021,ymax=w_nt+2*se_nt,ymin=w_nt-2*se_nt),fill="blue",alpha=0.2)+
+#   theme_bw()
+
+temp_rem_fix_data<-sf_rem_fix_data[,-16]
+temp_sf_all_dat<-rbind(subset(temp_rem_fix_data,YEAR<2018),
+                       data2017[,which(colnames(data2017) %in% colnames(temp_rem_fix_data))],subset(temp_rem_fix_data,YEAR==2018),data2018[,which(colnames(data2018) %in% colnames(temp_rem_fix_data))],subset(temp_rem_fix_data,YEAR==2019),data2019[,which(colnames(data2019) %in% colnames(temp_rem_fix_data))],subset(temp_rem_fix_data,YEAR==2020),data2020[,which(colnames(data2020) %in% colnames(temp_rem_fix_data))],subset(temp_rem_fix_data,YEAR==2021),data2021[,which(colnames(data2021) %in% colnames(temp_rem_fix_data))])
+
+#Taking averages
+agg_mean<-aggregate(total_target_species/(SOAKMINP3P1*NUM_HOOK_HAUL)~YEAR,data=temp_sf_all_dat,FUN=mean)
+agg_sd<-aggregate(total_target_species/(SOAKMINP3P1*NUM_HOOK_HAUL)~YEAR,data=temp_sf_all_dat,FUN=sd)
+agg_n<-aggregate(total_target_species/(SOAKMINP3P1*NUM_HOOK_HAUL)~YEAR,data=temp_sf_all_dat,FUN=length)
+
+agg_mean_fixed<-aggregate(total_target_species/(SOAKMINP3P1*NUM_HOOK_HAUL)~YEAR,data=sf_rem_fix_data,FUN=mean)
+agg_sd_fixed<-aggregate(total_target_species/(SOAKMINP3P1*NUM_HOOK_HAUL)~YEAR,data=sf_rem_fix_data,FUN=sd)
+agg_n_fixed<-aggregate(total_target_species/(SOAKMINP3P1*NUM_HOOK_HAUL)~YEAR,data=sf_rem_fix_data,FUN=length)
+
+agg_sd$`total_target_species/(SOAKMINP3P1 * NUM_HOOK_HAUL)`<-agg_sd$`total_target_species/(SOAKMINP3P1 * NUM_HOOK_HAUL)`/sqrt(agg_n$`total_target_species/(SOAKMINP3P1 * NUM_HOOK_HAUL)`)
+agg_sd_fixed$`total_target_species/(SOAKMINP3P1 * NUM_HOOK_HAUL)`<-agg_sd_fixed$`total_target_species/(SOAKMINP3P1 * NUM_HOOK_HAUL)`/sqrt(agg_n_fixed$`total_target_species/(SOAKMINP3P1 * NUM_HOOK_HAUL)`)
+
+colnames(agg_mean)<-c("Year","Index")
+colnames(agg_sd)<-c("Year","se")
+colnames(agg_mean_fixed)<-c("Year","Index")
+colnames(agg_sd_fixed)<-c("Year","se")
+
+avg_weights[is.na(avg_weights)]<-0
+
+#Transform to biomass, see what happens!
+station_indices_weights<-data.frame(Weights=Report$ldat*avg_weights,Year=temp_sf_all_dat$YEAR)
+station_mean_obs_weights<-data.frame(Weights=(temp_sf_all_dat$total_target_species/(temp_sf_all_dat$SOAKMINP3P1*temp_sf_all_dat$NUM_HOOK_HAUL))*temp_sf_all_dat$avg_weight,Year=temp_sf_all_dat$YEAR)
+station_fixed_obs_weights<-data.frame(Weights=(sf_rem_fix_data$total_target_species/(sf_rem_fix_data$SOAKMINP3P1*sf_rem_fix_data$NUM_HOOK_HAUL))*sf_rem_fix_data$avg_weight,Year=sf_rem_fix_data$YEAR)
+station_indices_weights[is.na(station_indices_weights$Weights),1]<-0
+station_mean_obs_weights[is.na(station_mean_obs_weights$Weights),1]<-0
+station_fixed_obs_weights[is.na(station_fixed_obs_weights$Weights),1]<-0
+
+mean_station_indices_weights<-aggregate(Weights~Year,data=station_indices_weights,FUN=mean)
+mean_station_obs_weights<-aggregate(Weights~Year,data=station_mean_obs_weights,FUN=mean)
+mean_fixed_obs_weights<-aggregate(Weights~Year,data=station_fixed_obs_weights,FUN=mean)
+
+sd_station_indices_weights<-aggregate(Weights~Year,data=station_indices_weights,FUN=sd)
+sd_station_obs_weights<-aggregate(Weights~Year,data=station_mean_obs_weights,FUN=sd)
+sd_fixed_obs_weights<-aggregate(Weights~Year,data=station_fixed_obs_weights,FUN=sd)
+
+bio_trans_plot<-ggplot()+
+  geom_point(data=mean_station_indices_weights,aes(x=Year,y=Weights,col="Transformed MEMSpa Output"))+
+  geom_line(data=mean_station_indices_weights,aes(x=Year,y=Weights,col="Transformed MEMSpa Output"))+
+  geom_ribbon(aes(x=sd_station_indices_weights$Year,ymin=mean_station_indices_weights$Weights-sd_station_indices_weights$Weights,ymax=mean_station_indices_weights$Weights+sd_station_indices_weights$Weights,col="Transformed MEMSpa Output",fill="Transformed MEMSpa Output"),alpha=0.4)+
+  geom_point(data=mean_station_obs_weights,aes(x=Year,y=Weights,col="Straight Mean (Both Datasets)"))+
+  geom_line(data=mean_station_obs_weights,aes(x=Year,y=Weights,col="Straight Mean (Both Datasets)"))+
+  geom_ribbon(aes(x=sd_station_obs_weights$Year,ymin=mean_station_obs_weights$Weights-sd_station_obs_weights$Weights,ymax=mean_station_obs_weights$Weights+sd_station_obs_weights$Weights,col="Straight Mean (Both Datasets)",fill="Straight Mean (Both Datasets)"),alpha=0.4)+
+  geom_point(data=mean_fixed_obs_weights,aes(x=Year,y=Weights,col="Straight Mean (Fixed Stations)"))+
+  geom_line(data=mean_fixed_obs_weights,aes(x=Year,y=Weights,col="Straight Mean (Fixed Stations)"))+
+  geom_ribbon(aes(x=sd_fixed_obs_weights$Year,ymin=mean_fixed_obs_weights$Weights-sd_fixed_obs_weights$Weights,ymax=mean_fixed_obs_weights$Weights+sd_fixed_obs_weights$Weights,col="Straight Mean (Fixed Stations)",fill="Straight Mean (Fixed Stations)"),alpha=0.4)+
+  theme_bw()
+
+load("vess_eff_frame.RData")
+
+w_lamb_t2<-ggplot()+
+  geom_point(aes(x=2000:2021,y=weighted_avgs_frame$w_t,col="Spatio-Temporal MEMSpa (Both Datasets)"))+
+  geom_line(aes(x=2000:2021,y=weighted_avgs_frame$w_t,col="Spatio-Temporal MEMSpa (Both Datasets)"))+
+  geom_ribbon(aes(x=2000:2021,ymax=weighted_avgs_frame$w_t+2*weighted_avgs_frame$se_t,ymin=weighted_avgs_frame$w_t-2*weighted_avgs_frame$se_t,fill="Spatio-Temporal MEMSpa (Both Datasets)"),alpha=0.2)+
+  geom_point(aes(x=2000:2021,y=weighted_avgs_frame_vess$w_t,col="Vess Effect STMEMSpa"))+
+  geom_line(aes(x=2000:2021,y=weighted_avgs_frame_vess$w_t,col="Vess Effect STMEMSpa"))+
+  geom_ribbon(aes(x=2000:2021,ymax=weighted_avgs_frame_vess$w_t+2*weighted_avgs_frame_vess$se_t,ymin=weighted_avgs_frame_vess$w_t-2*weighted_avgs_frame_vess$se_t,fill="Vess Effect STMEMSpa"),alpha=0.2)+
+  scale_color_manual(name="",values=c("red","blue"),label=c("Spatio-Temporal MEMSpa (Both Datasets)","Vess Effect STMEMSpa"))+
+  scale_fill_manual(name="",values=c("red","blue"),label=c("Spatio-Temporal MEMSpa (Both Datasets)","Vess Effect STMEMSpa"))+
+  theme_bw()+ylab("Estimated Overall Index")
+# ggsave(filename="diff_with_vess_eff.png",plot=w_lamb_t2,height=7,width=9)
+
+load("diri_17_for_grid.RData")
+
+grid_area<-st_make_grid(diri_17,cellsize=8000)
+diri_17<-st_buffer(diri_17,0)
+good_grid_area<-st_intersection(diri_17,grid_area)
+grid_centroids<-st_centroid(good_grid_area)
+
+ldat_2011<-data.frame(ldat=Report$ldat[Yearly_indices[12,]$ind_1:Yearly_indices[12,]$ind_2],geometry=subset(sf_rem_fix_data,YEAR==2011)$geometry)
+
+ldat_2011<-st_as_sf(ldat_2011)
+ldat_2011$knotID<-c(1:length(ldat_2011$ldat))
+
+distmat_2011<-pointDistance(grid_centroids,ldat_2011,lonlat=F)
+polyknotID<-c()
+for (i in 1:length(st_coordinates(grid_centroids)[,1])) {
+  polyknotID<-c(polyknotID,which(distmat_2011[i,]==min(distmat_2011[i,])))
+}
+good_grid_area$knotID<-polyknotID
+good_grid_area$area<-st_area(good_grid_area)
+
+ldat_info<-left_join(good_grid_area,st_drop_geometry(ldat_2011),by="knotID")
+
+ldat_plot_2011<-ggplot()+
+  geom_sf(data=ldat_info,aes(fill=ldat),col=NA)+
+  scale_fill_viridis_c()
+
+pre_geom<-c(subset(sf_rem_fix_data,YEAR<2017)$geometry,subset(sf_rem_fix_data,YEAR==2017)$geometry,data2017$geometry,subset(sf_rem_fix_data,YEAR==2018)$geometry,data2018$geometry,subset(sf_rem_fix_data,YEAR==2019)$geometry,data2019$geometry,subset(sf_rem_fix_data,YEAR==2020)$geometry,data2020$geometry,subset(sf_rem_fix_data,YEAR==2021)$geometry,data2021$geometry)
+
+#Have to rework this whole thing
+all_dem_ldat<-data.frame(ldat=Report$ldat,geometry=pre_geom,Year=rep(2000:2021,times=main_n),knotID=rep(NA,length(Report$ldat)))
+all_dem_ldat<-st_as_sf(all_dem_ldat)
+all_dem_ldant<-data.frame(ldat=Report$ldant,geometry=pre_geom,Year=rep(2000:2021,times=main_n),knotID=rep(NA,length(Report$ldant)))
+all_dem_ldant<-st_as_sf(all_dem_ldant)
+for (i in 2000:2021){
+  all_dem_ldat[all_dem_ldat$Year==i,]$knotID<-c(1:length(subset(all_dem_ldat,Year==i)$Year))
+    all_dem_ldant[all_dem_ldant$Year==i,]$knotID<-c(1:length(subset(all_dem_ldant,Year==i)$Year))
+}
+
+
+good_grid_area2<-st_intersection(diri_17,grid_area)
+good_grid_area2<-st_sf(good_grid_area2$geometry) %>% rename(geometry=good_grid_area2.geometry)
+grid_centroids2<-st_centroid(good_grid_area2)
+
+good_grid_area2<-rbind(good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2,good_grid_area2)
+good_grid_area2$Year<-rep(2000:2021,each=9207)
+good_grid_area2$knotID<-rep(NA,length(good_grid_area2$Year))
+
+big_ID<-c()
+for (i in 1:length(2000:2021)){
+  distmat_all<-pointDistance(grid_centroids,subset(all_dem_ldat,Year==(c(2000:2021)[i])),lonlat=F)
+  polyknotID<-c()
+  for (i in 1:length(st_coordinates(grid_centroids)[,1])) {
+    polyknotID<-c(polyknotID,which(distmat_all[i,]==min(distmat_all[i,])))
+  }
+  big_ID<-c(big_ID,polyknotID)
+}
+good_grid_area2$knotID<-big_ID
+
+good_grid_area2$Year<-as.numeric(good_grid_area2$Year)
+
+ldat_info_all<-left_join(good_grid_area2,st_drop_geometry(all_dem_ldat),by=c("Year","knotID"))
+
+ldat_plot_all<-ggplot()+
+  geom_sf(data=ldat_info_all,aes(fill=ldat),col=NA)+
+  scale_fill_viridis_c(name="Estimated Target \nCatch Rate")+theme_bw()+
+  facet_wrap(~Year)+xlab("Easting")+ylab("Northing")
+ggsave(filename="all_ldat_both_data.png",plot=ldat_plot_all,height=15,width=15)
+
+
+ldant_info_all<-left_join(good_grid_area2,st_drop_geometry(all_dem_ldant),by=c("Year","knotID"))
+
+ldant_plot_all<-ggplot()+
+  geom_sf(data=ldant_info_all,aes(fill=ldat),col=NA)+
+  scale_fill_viridis_c(name="Estimated Non-Target \nCatch Rate")+theme_bw()+
+  facet_wrap(~Year)+xlab("Easting")+ylab("Northing")
+ggsave(filename="all_ldant_both_data.png",plot=ldant_plot_all,height=15,width=15)
+
+```
+
+```{r fit-2017-onwards}
+
+n_strat<-sum(c(nrow(data2017),nrow(data2018),nrow(data2019),nrow(data2020),nrow(data2021)))
+n_strats_sep<-c(nrow(data2017),nrow(data2018),nrow(data2019),nrow(data2020),nrow(data2021))
+n_fixed<-nrow(subset(sf_rem_fix_data,YEAR %in% c(2017:2021)))
+
+#Setting up H_i and H_j
+H_j<-rep(NA,n_strat+n_fixed)
+H_i<-rep(NA,n_strat)
+vess_id<-rep(NA,n_strat+n_fixed)
+
+n_t<-length(2017:2021)
+n_k<-3
+n_k2<-4
+
+main_n2<-rep(NA,n_t)
+for (i in 1:n_t){
+  main_n2[i]<-n_strats_sep[i]
+}
+
+main_n<-rep(NA,n_t)
+for (i in 1:n_t){
+  main_n[i]<-n_frame$fix_n[i+19]+main_n2[i]
+}
+
+sub_n_frame<-n_frame[c(20:24),]
+
+#NEED TO MODIFY STARTING HERE
+Yearly_indices<-data.frame(year=c(2017:2021),
+                           ind_1=c(1,240,490,711,958),
+                           ind_2=c(239,489,710,957,1186))
+ind1<-Yearly_indices$ind_1
+ind2<-Yearly_indices$ind_2
+
+soaky<-rep(NA,sum(main_n))
+
+locations<-matrix(nrow=sum(main_n),ncol=2)
+
+sub_dat_list_for_comb<-list(dat_list_for_comb[[18]],dat_list_for_comb[[19]],dat_list_for_comb[[20]],dat_list_for_comb[[21]],dat_list_for_comb[[22]])
+
+sub_strat_dat_comb<-list(strat_dat_comb[[18]],strat_dat_comb[[19]],strat_dat_comb[[20]],strat_dat_comb[[21]],strat_dat_comb[[22]])
+
+big_A<-matrix(nrow=sum(main_n),ncol=n_k)
+for (i in 2017:2021){
+    big_A[c(ind1[i-2016]:(ind1[i-2016]+sub_n_frame$fix_n[i-2016]-1)),]<-as.matrix(data.frame(sub_dat_list_for_comb[[i-2016]]$total_target_species,sub_dat_list_for_comb[[i-2016]]$total_other_species,sub_dat_list_for_comb[[i-2016]]$empty_hooks))
+    H_j[c((ind1[i-2016]):(ind1[i-2016]+sub_n_frame$fix_n[i-2016]-1))]<-rep(0,length(c((ind1[i-2016]):(ind1[i-2016]+sub_n_frame$fix_n[i-2016]-1))))
+    soaky[c((ind1[i-2016]):(ind1[i-2016]+sub_n_frame$fix_n[i-2016]-1))]<-sub_dat_list_for_comb[[i-2016]]$SOAKMINP3P1
+    locations[c((ind1[i-2016]):(ind1[i-2016]+sub_n_frame$fix_n[i-2016]-1)),]<-st_coordinates(sub_dat_list_for_comb[[i-2016]])
+    vess_id[c((ind1[i-2016]):(ind1[i-2016]+sub_n_frame$fix_n[i-2016]-1))]<-sub_dat_list_for_comb[[i-2016]]$Vess_fact
+    big_A[c((ind1[i-2016]+sub_n_frame$fix_n[i-2016]):ind2[i-2016]),]<-as.matrix(data.frame(sub_strat_dat_comb[[i-2016]]$target_species_700,sub_strat_dat_comb[[i-2016]]$other_species_700,sub_strat_dat_comb[[i-2016]]$nbe_700))
+  H_j[c((ind1[i-2016]+sub_n_frame$fix_n[i-2016]):ind2[i-2016])]<-rep(1,length(c((ind1[i-2016]+sub_n_frame$fix_n[i-2016]):ind2[i-2016])))
+  soaky[c((ind1[i-2016]+sub_n_frame$fix_n[i-2016]):ind2[i-2016])]<-sub_strat_dat_comb[[i-2016]]$SOAKMINP3P1
+  vess_id[c((ind1[i-2016]+sub_n_frame$fix_n[i-2016]):ind2[i-2016])]<-sub_strat_dat_comb[[i-2016]]$Vess_fact
+  locations[c((ind1[i-2016]+sub_n_frame$fix_n[i-2016]):ind2[i-2016]),]<-st_coordinates(sub_strat_dat_comb[[i-2016]])
+}
+H_i<-which(H_j==1)-1
+#Change vessel id so that they're ordered, kindoff
+garb<-unique(vess_id)
+garb2<-order(unique(vess_id))
+for (j in 1:length(vess_id)){
+  for (i in 1:length(garb)){
+    if (vess_id[j]==garb[i]){
+      vess_id[j]<-garb2[i]
+      break
+    }
+  }
+}
+vess_id<-vess_id-1
+
+spool<-sqrt(((length(locations[,1])-1)*var(locations[,1])+(length(locations[,2])-1)*var(locations[,2]))/(length(locations[,1])+length(locations[,2])))
+locations[,1]<-(locations[,1]-median(locations[,1]))/spool
+locations[,2]<-(locations[,2]-median(locations[,2]))/spool
+
+
+big_H<-as.matrix(data.frame(c(data2017$empty_baited,data2018$empty_baited,data2019$empty_baited,data2020$empty_baited,data2021$empty_baited),c(data2017$target_species,data2018$target_species,data2019$target_species,data2020$target_species,data2021$target_species),c(data2017$other_species,data2018$other_species,data2019$other_species,data2020$other_species,data2021$other_species),c(data2017$empty_unb,data2018$empty_unb,data2019$empty_unb,data2020$empty_unb,data2021$empty_unb)))
+
+```
+
+```{r fit-2017-more}
+
+data<-list(A=big_A,H=big_H,H_i=H_i,H_j=H_j,vess_id=vess_id,s=soaky,locations=locations,n_t=n_t,n=main_n,n_k=3,n2=main_n2,n_k2=4)
+
+par_list<-list()
+    
+# Initial values for lambda.t, lambda.nt and pnt
+# Use the estimated values as the starting points
+par_list$betat = -13
+par_list$betant = -8
+# par_list$theta = logitp(0.8795768)
+par_list$theta = 0
+#Random effect of time
+par_list$rand_t = rep(-13,data$n_t)
+par_list$rand_nt = rep(-8,data$n_t)
+# Random field
+par_list$omegat =  rep(0,nrow(big_A))
+par_list$omegant =  rep(0,nrow(big_A))
+#Vessel effect
+par_list$vess_eff_t = rep(0,length(unique(vess_id)))
+par_list$vess_eff_nt = rep(0,length(unique(vess_id)))
+# Smoothness parameter 
+par_list$lognut = 0
+par_list$lognunt = 0
+# Range parameter 
+# par_list$logPhit = -3
+# par_list$logPhint = -1
+par_list$logPhit = -1
+par_list$logPhint = -1
+# Variance
+par_list$logSigmat = 0
+par_list$logSigmant = 0
+#Vess effect sigmas
+par_list$log_sigma_vess_t = 0
+par_list$log_sigma_vess_nt = 0
+#Rand intercept sigmas
+par_list$log_sigma_rand_t = 0
+par_list$log_sigma_rand_nt = 0
+#Rand intercept means
+par_list$mean_rand_t = -12
+par_list$mean_rand_nt = -8
+
+par_list$log_H_aniso = c(0,0)
+
+map<-list(lognut=factor(NA),lognunt=factor(NA))
+
+random<-c("omegat","omegant","rand_t","rand_nt","vess_eff_t","vess_eff_nt")
+library(optimr)
+
+
+obj<-MakeADFun(data,par_list,random=random,DLL="spat_temp_both_datasets",map=map,silent=F)
+Opt<-optimx::optimr(obj$par,obj$fn,obj$gr,control=list(maxit=100000),method="nlminb")
+rep<-sdreport(obj)
+Report<-obj$report()
+
+# save(obj,Opt,rep,Report,file="both_strat_fixed_run1.RData")
+# save(obj,Opt,rep,Report,file="both_strat_fixed_ldat_se_2017_onwards_2021inc.RData")
+# save(obj,Opt,rep,Report,file="both_strat_fixed_ldat_se_2017_onwards_norm_vess_eff.RData")
+save(obj,Opt,rep,Report,file="good_rand_walk_2017plus_output.RData")
+
+load("good_rand_walk_2017plus_output.RData")
+rep_both_2017<-rep
+Report_both_2017<-Report
+
+```
+
+```{r all-plets}
+pnt<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+aniso_1<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+aniso_2<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+phit<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+phint<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+vart<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+varnt<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+rand_t<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+rand_nt<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+for (i in c(1:5)){
+  pnt[i,]<-c(rep$value[1],rep$sd[1])
+  aniso_1[i,]<-summary(rep)[2,]
+  aniso_2[i,]<-summary(rep)[3,]
+  phit[i+17,]<-c(rep$value[which(names(rep$value)=="phit")],rep$sd[which(names(rep$value)=="phit")])
+  phint[i+17,]<-c(rep$value[which(names(rep$value)=="phint")],rep$sd[which(names(rep$value)=="phint")])
+  vart[i,]<-c(rep$value[which(names(rep$value)=="vart")],rep$sd[which(names(rep$value)=="vart")])
+  varnt[i,]<-c(rep$value[which(names(rep$value)=="varnt")],rep$sd[which(names(rep$value)=="varnt")])
+  rand_t[i+17,]<-c(rep$value[which(names(rep$value)=="rand_t")][i],rep$sd[which(names(rep$value)=="rand_t")][i])
+    rand_nt[i+17,]<-c(rep$value[which(names(rep$value)=="rand_nt")][i],rep$sd[which(names(rep$value)=="rand_nt")][i])
+}
+vess_effect_t<-data.frame(val=rep(NA,length(unique(vess_id))),sd=rep(NA,length(unique(vess_id))))
+vess_effect_nt<-data.frame(val=rep(NA,length(unique(vess_id))),sd=rep(NA,length(unique(vess_id))))
+for (i in 1:length(unique(vess_id))){
+  vess_effect_t[i,]<-c(rep$value[which(names(rep$value)=="vess_eff_t")][i],rep$sd[which(names(rep$value)=="vess_eff_t")][i])
+  vess_effect_nt[i,]<-c(rep$value[which(names(rep$value)=="vess_eff_nt")][i],rep$sd[which(names(rep$value)=="vess_eff_nt")][i])
+}
+
+rand_plot<-ggplot()+
+  geom_line(data=rand_t,aes(x=2000:2021,y=val),col="red")+
+  geom_point(data=rand_t,aes(x=2000:2021,y=val),col="red")+
+  geom_ribbon(data=rand_t,aes(x=2000:2021,ymin=val-2*sd,ymax=val+2*sd),col="red",fill="red",alpha=0.2)+
+  geom_line(data=rand_nt,aes(x=2000:2021,y=val),col="blue")+
+  geom_point(data=rand_nt,aes(x=2000:2021,y=val),col="blue")+
+  geom_ribbon(data=rand_nt,aes(x=2000:2021,ymin=val-2*sd,ymax=val+2*sd),col="blue",fill="blue",alpha=0.2)+
+  theme_bw()+
+  geom_text(aes(x=c(2002,2002),y=c(-10.25,-14.25),label=c("rand_nt","rand_t")))+
+  xlab("Year")+ylab("Estimated Value")
+# ggsave(filename="rand_plot_both_data.png",rand_plot)
+
+
+# phi_plot<-ggplot()+
+#   geom_line(data=phit,aes(x=2000:2021,y=val),col="red")+
+#   geom_point(data=phit,aes(x=2000:2021,y=val),col="red")+
+#   geom_ribbon(data=phit,aes(x=2000:2021,ymin=val-2*sd,ymax=val+2*sd),col="red",fill="red",alpha=0.2)+
+#   geom_line(data=phint,aes(x=2000:2021,y=val),col="blue")+
+#   geom_point(data=phint,aes(x=2000:2021,y=val),col="blue")+
+#   geom_ribbon(data=phint,aes(x=2000:2021,ymin=val-2*sd,ymax=val+2*sd),col="blue",fill="blue",alpha=0.2)+
+#   theme_bw()+
+#   geom_text(aes(x=c(2013,2013),y=c(0.14,0.12),label=c("phi_nt=blue","phi_t=red")))+
+#   xlab("Year")+ylab("Estimated Value")
+# ggsave(filename="phi_plot_both_data.png",phi_plot)
+
+```
+
+
+
+```{r}
+bid = read.csv("blockIDkey.csv", header = T)
+loc_id = cbind(bid$lon.DecDeg, bid$lat.DecDeg)
+# Plot Block ID
+plot(loc_id, xlab="Long", ylab="Lat", main="blockIDkey", pch=20)
+
+# Area
+area_list<-list()
+for (i in c(18:length(diri_list))){
+  
+  wts = c()
+  for (j in 1:length(Report$ldat[Yearly_indices[i-17,]$ind_1:Yearly_indices[i-17,]$ind_2])){
+    temp_area<-length(which(station_IDs[[i]]==j))*4
+    wts[j]<-temp_area
+  }
+  # Target
+  dweight_ave_t = sum((Report$ldat[Yearly_indices[i-17,]$ind_1:Yearly_indices[i-17,]$ind_2])*wts)/sum(wts)
+  weighted_t<-dweight_ave_t
+  # Standard error calculation
+  wts = as.matrix(wts)
+  # wi/sum(wi)
+  wts_2 = wts/(sum(wts))
+  # covariance matrix for estimated lambda t
+  cov = rep$cov
+  cov_t = cov[(Yearly_indices[i-17,]$ind_1+15):(Yearly_indices[i-17,]$ind_2+15), (Yearly_indices[i-17,]$ind_1+15):(Yearly_indices[i-17,]$ind_2+15)]
+  
+  # Standard error for Dirichlet method 
+  se2_dir_t = t(wts_2)%*%cov_t%*%wts_2
+  se_t<-se2_dir_t
+  # Non-target
+  dweight_ave_nt = sum((Report$ldant[Yearly_indices[i-17,]$ind_1:Yearly_indices[i-17,]$ind_2])*wts)/sum(wts)
+  weighted_nt<-dweight_ave_nt
+  # covariance matrix for estimated lambda t
+  cov_nt = cov[(tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i-17,]$ind_1+15):(tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i-17,]$ind_2+15), (tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i-17,]$ind_1+15) :(tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i-17,]$ind_2+15)]
+  # Standard error for Dirichlet method 
+  se2_dir_nt = t(wts_2)%*%cov_nt%*%wts_2
+  se_nt<-se2_dir_nt
+  
+  area_list[[i]]<-data.frame(weighted_t,sqrt(se_t),weighted_nt,sqrt(se_nt))
+}
+
+weighted_avgs_frame_last<-data.frame(w_t=rep(NA,22),se_t=rep(NA,22),
+                                w_nt=rep(NA,22),se_nt=rep(NA,22))
+for (i in c(18:22)){
+  weighted_avgs_frame_last$w_t[i]<-area_list[[i]]$weighted_t
+  weighted_avgs_frame_last$se_t[i]<-area_list[[i]]$sqrt.se_t.
+  weighted_avgs_frame_last$w_nt[i]<-area_list[[i]]$weighted_nt
+  weighted_avgs_frame_last$se_nt[i]<-area_list[[i]]$sqrt.se_nt.
+}
+
+w_lamb_t<-ggplot(data=weighted_avgs_frame_last)+
+  geom_point(aes(x=2000:2021,y=w_t),col="red")+
+  geom_line(aes(x=2000:2021,y=w_t),col="red")+
+  geom_ribbon(aes(x=2000:2021,ymax=w_t+2*se_t,ymin=w_t-2*se_t),fill="red",alpha=0.2)+
+  theme_bw()
+
+w_lamb_nt<-ggplot(data=weighted_avgs_frame_last)+
+  geom_point(aes(x=2000:2021,y=w_nt),col="blue")+
+  geom_line(aes(x=2000:2021,y=w_nt),col="blue")+
+  geom_ribbon(aes(x=2000:2021,ymax=w_nt+2*se_nt,ymin=w_nt-2*se_nt),fill="blue",alpha=0.2)+
+  theme_bw()
+
+
+pre_geom<-c(subset(sf_rem_fix_data,YEAR==2017)$geometry,data2017$geometry,subset(sf_rem_fix_data,YEAR==2018)$geometry,data2018$geometry,subset(sf_rem_fix_data,YEAR==2019)$geometry,data2019$geometry,subset(sf_rem_fix_data,YEAR==2020)$geometry,data2020$geometry,subset(sf_rem_fix_data,YEAR==2021)$geometry,data2021$geometry)
+
+
+all_dem_ldat<-data.frame(ldat=Report$ldat,geometry=pre_geom,Year=rep(2017:2021,times=main_n),knotID=rep(NA,length(Report$ldat)))
+all_dem_ldat<-st_as_sf(all_dem_ldat)
+for (i in 2017:2021){
+  all_dem_ldat[all_dem_ldat$Year==i,]$knotID<-c(1:length(subset(all_dem_ldat,Year==i)$Year))
+}
+
+good_grid_area3<-subset(good_grid_area2,Year>2016)
+
+big_ID<-c()
+for (i in 1:length(2017:2021)){
+  distmat_all<-pointDistance(grid_centroids,subset(all_dem_ldat,Year==(c(2017:2021)[i])),lonlat=F)
+  polyknotID<-c()
+  for (i in 1:length(st_coordinates(grid_centroids)[,1])) {
+    polyknotID<-c(polyknotID,which(distmat_all[i,]==min(distmat_all[i,])))
+  }
+  big_ID<-c(big_ID,polyknotID)
+}
+good_grid_area3$knotID<-big_ID
+
+ldat_info_all<-left_join(good_grid_area3,st_drop_geometry(all_dem_ldat),by=c("Year","knotID"))
+
+ldat_plot_all<-ggplot()+
+  geom_sf(data=ldat_info_all,aes(fill=ldat),col=NA)+
+  scale_fill_viridis_c()+theme_bw()+
+  facet_wrap(~Year)
+ggsave(filename="all_ldat_2017plus_both_dataset.png",plot=ldat_plot_all,height=15,width=15)
+
+save(rand_t,rand_nt,vess_effect_t,vess_effect_nt,weighted_avgs_frame_last,file="comp_stuff_2017_onwards_both2.RData")
+```
+
+```{r fit-2017-onwards-strat-only}
+
+n_strat<-sum(c(nrow(data2017),nrow(data2018),nrow(data2019),nrow(data2020),nrow(data2021)))
+n_strats_sep<-c(nrow(data2017),nrow(data2018),nrow(data2019),nrow(data2020),nrow(data2021))
+n_fixed<-0
+
+#Setting up H_i and H_j
+H_j<-rep(NA,n_strat+n_fixed)
+H_i<-rep(NA,n_strat)
+vess_id<-rep(NA,n_strat+n_fixed)
+
+n_t<-length(2017:2021)
+n_k<-3
+n_k2<-4
+
+main_n2<-rep(NA,n_t)
+for (i in 1:n_t){
+  main_n2[i]<-n_strats_sep[i]
+}
+
+main_n<-rep(NA,n_t)
+for (i in 1:n_t){
+  main_n[i]<-n_frame$fix_n[i+19]+main_n2[i]
+}
+
+sub_n_frame<-n_frame[c(20:24),]
+
+#NEED TO MODIFY STARTING HERE
+Yearly_indices<-data.frame(year=c(2017:2021),
+                           ind_1=c(1,142,292,415,563),
+                           ind_2=c(141,291,414,562,693))
+ind1<-Yearly_indices$ind_1
+ind2<-Yearly_indices$ind_2
+
+soaky<-rep(NA,sum(main_n2))
+
+locations<-matrix(nrow=sum(main_n2),ncol=2)
+
+sub_strat_dat_comb<-list(strat_dat_comb[[18]],strat_dat_comb[[19]],strat_dat_comb[[20]],strat_dat_comb[[21]],strat_dat_comb[[22]])
+
+big_A<-matrix(nrow=sum(main_n2),ncol=n_k)
+for (i in 2017:2021){
+    big_A[c((ind1[i-2016]):ind2[i-2016]),]<-as.matrix(data.frame(sub_strat_dat_comb[[i-2016]]$target_species_700,sub_strat_dat_comb[[i-2016]]$other_species_700,sub_strat_dat_comb[[i-2016]]$nbe_700))
+  H_j[c((ind1[i-2016]):ind2[i-2016])]<-rep(1,length(c((ind1[i-2016]):ind2[i-2016])))
+  soaky[c((ind1[i-2016]):ind2[i-2016])]<-sub_strat_dat_comb[[i-2016]]$SOAKMINP3P1
+  vess_id[c((ind1[i-2016]):ind2[i-2016])]<-sub_strat_dat_comb[[i-2016]]$Vess_fact
+  locations[c((ind1[i-2016]):ind2[i-2016]),]<-st_coordinates(sub_strat_dat_comb[[i-2016]])
+}
+H_i<-which(H_j==1)-1
+garb<-unique(vess_id)
+garb2<-order(unique(vess_id))
+for (j in 1:length(vess_id)){
+  for (i in 1:length(garb)){
+    if (vess_id[j]==garb[i]){
+      vess_id[j]<-garb2[i]
+      break
+    }
+  }
+}
+vess_id<-vess_id-1
+
+
+spool<-sqrt(((length(locations[,1])-1)*var(locations[,1])+(length(locations[,2])-1)*var(locations[,2]))/(length(locations[,1])+length(locations[,2])))
+locations[,1]<-(locations[,1]-median(locations[,1]))/spool
+locations[,2]<-(locations[,2]-median(locations[,2]))/spool
+
+
+big_H<-as.matrix(data.frame(c(data2017$empty_baited,data2018$empty_baited,data2019$empty_baited,data2020$empty_baited,data2021$empty_baited),c(data2017$target_species,data2018$target_species,data2019$target_species,data2020$target_species,data2021$target_species),c(data2017$other_species,data2018$other_species,data2019$other_species,data2020$other_species,data2021$other_species),c(data2017$empty_unb,data2018$empty_unb,data2019$empty_unb,data2020$empty_unb,data2021$empty_unb)))
+
+```
+
+```{r fit-2017-more-strat-only}
+
+data<-list(A=big_A,H=big_H,H_i=H_i,H_j=H_j,s=soaky,vess_id=vess_id,locations=locations,n_t=n_t,n=main_n2,n_k=3,n2=main_n2,n_k2=4)
+
+par_list<-list()
+    
+# Initial values for lambda.t, lambda.nt and pnt
+# Use the estimated values as the starting points
+par_list$betat = -13
+par_list$betant = -8
+# par_list$theta = logitp(0.8795768)
+par_list$theta = 0
+#Random effect of time
+par_list$rand_t = rep(-13,data$n_t)
+par_list$rand_nt = rep(-8,data$n_t)
+# Random field
+par_list$omegat =  rep(0,nrow(big_A))
+par_list$omegant =  rep(0,nrow(big_A))
+#Vessel effect
+par_list$vess_eff_t = rep(0,length(unique(vess_id)))
+par_list$vess_eff_nt = rep(0,length(unique(vess_id)))
+# Smoothness parameter 
+par_list$lognut = 0
+par_list$lognunt = 0
+# Range parameter 
+# par_list$logPhit = -3
+# par_list$logPhint = -1
+par_list$logPhit = -1
+par_list$logPhint = -1
+# Variance
+par_list$logSigmat = 0
+par_list$logSigmant = 0
+#Vess effect sigmas
+par_list$log_sigma_vess_t = 0
+par_list$log_sigma_vess_nt = 0
+#Rand intercept sigmas
+par_list$log_sigma_rand_t = 0
+par_list$log_sigma_rand_nt = 0
+#Rand intercept means
+par_list$mean_rand_t = -12
+par_list$mean_rand_nt = -8
+
+par_list$log_H_aniso = c(0,0)
+
+map<-list(lognut=factor(NA),lognunt=factor(NA))
+
+random<-c("omegat","omegant","rand_t","rand_nt","vess_eff_t","vess_eff_nt")
+library(optimr)
+
+
+obj<-MakeADFun(data,par_list,random=random,DLL="spat_temp_both_datasets",map=map,silent=F)
+Opt<-optimx::optimr(obj$par,obj$fn,obj$gr,control=list(maxit=100000),method="nlminb")
+rep<-sdreport(obj)
+Report<-obj$report()
+
+# save(obj,Opt,rep,Report,file="both_strat_fixed_run1.RData")
+# save(obj,Opt,rep,Report,file="both_strat_fixed_ldat_se_2017_onwards_2021inc_only_strat.RData")
+# save(obj,Opt,rep,Report,file="both_strat_fixed_ldat_se_2017_onwards_2021inc_only_strat_norm_vess_effect.RData")
+save(obj,Opt,rep,Report,file="strat_only_run_rand_walk.RData")
+
+load("strat_only_run_rand_walk.RData")
+rep_strat_2017<-rep
+Report_strat_2017<-Report
+
+```
+
+```{r all-plets}
+pnt<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+aniso_1<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+aniso_2<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+phit<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+phint<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+vart<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+varnt<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+rand_t<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+rand_nt<-data.frame(val=rep(NA,22),sd=rep(NA,22))
+for (i in c(1:5)){
+  pnt[i,]<-c(rep$value[1],rep$sd[1])
+  aniso_1[i,]<-summary(rep)[2,]
+  aniso_2[i,]<-summary(rep)[3,]
+  phit[i+17,]<-c(rep$value[which(names(rep$value)=="phit")],rep$sd[which(names(rep$value)=="phit")])
+  phint[i+17,]<-c(rep$value[which(names(rep$value)=="phint")],rep$sd[which(names(rep$value)=="phint")])
+  vart[i,]<-c(rep$value[which(names(rep$value)=="vart")],rep$sd[which(names(rep$value)=="vart")])
+  varnt[i,]<-c(rep$value[which(names(rep$value)=="varnt")],rep$sd[which(names(rep$value)=="varnt")])
+  rand_t[i+17,]<-c(rep$value[which(names(rep$value)=="rand_t")][i],rep$sd[which(names(rep$value)=="rand_t")][i])
+    rand_nt[i+17,]<-c(rep$value[which(names(rep$value)=="rand_nt")][i],rep$sd[which(names(rep$value)=="rand_nt")][i])
+}
+vess_effect_t<-data.frame(val=rep(NA,length(unique(vess_id))),sd=rep(NA,length(unique(vess_id))))
+vess_effect_nt<-data.frame(val=rep(NA,length(unique(vess_id))),sd=rep(NA,length(unique(vess_id))))
+for (i in 1:length(unique(vess_id))){
+  vess_effect_t[i,]<-c(rep$value[which(names(rep$value)=="vess_eff_t")][i],rep$sd[which(names(rep$value)=="vess_eff_t")][i])
+  vess_effect_nt[i,]<-c(rep$value[which(names(rep$value)=="vess_eff_nt")][i],rep$sd[which(names(rep$value)=="vess_eff_nt")][i])
+}
+
+rand_plot<-ggplot()+
+  geom_line(data=rand_t,aes(x=2000:2021,y=val),col="red")+
+  geom_point(data=rand_t,aes(x=2000:2021,y=val),col="red")+
+  geom_ribbon(data=rand_t,aes(x=2000:2021,ymin=val-2*sd,ymax=val+2*sd),col="red",fill="red",alpha=0.2)+
+  geom_line(data=rand_nt,aes(x=2000:2021,y=val),col="blue")+
+  geom_point(data=rand_nt,aes(x=2000:2021,y=val),col="blue")+
+  geom_ribbon(data=rand_nt,aes(x=2000:2021,ymin=val-2*sd,ymax=val+2*sd),col="blue",fill="blue",alpha=0.2)+
+  theme_bw()+
+  geom_text(aes(x=c(2002,2002),y=c(-10.25,-14.25),label=c("rand_nt","rand_t")))+
+  xlab("Year")+ylab("Estimated Value")
+# ggsave(filename="rand_plot_both_data.png",rand_plot)
+
+
+# phi_plot<-ggplot()+
+#   geom_line(data=phit,aes(x=2000:2021,y=val),col="red")+
+#   geom_point(data=phit,aes(x=2000:2021,y=val),col="red")+
+#   geom_ribbon(data=phit,aes(x=2000:2021,ymin=val-2*sd,ymax=val+2*sd),col="red",fill="red",alpha=0.2)+
+#   geom_line(data=phint,aes(x=2000:2021,y=val),col="blue")+
+#   geom_point(data=phint,aes(x=2000:2021,y=val),col="blue")+
+#   geom_ribbon(data=phint,aes(x=2000:2021,ymin=val-2*sd,ymax=val+2*sd),col="blue",fill="blue",alpha=0.2)+
+#   theme_bw()+
+#   geom_text(aes(x=c(2013,2013),y=c(0.14,0.12),label=c("phi_nt=blue","phi_t=red")))+
+#   xlab("Year")+ylab("Estimated Value")
+# ggsave(filename="phi_plot_both_data.png",phi_plot)
+
+```
+
+
+
+```{r}
+bid = read.csv("blockIDkey.csv", header = T)
+loc_id = cbind(bid$lon.DecDeg, bid$lat.DecDeg)
+# Plot Block ID
+plot(loc_id, xlab="Long", ylab="Lat", main="blockIDkey", pch=20)
+
+# Area
+area_list<-list()
+for (i in c(18:length(diri_list))){
+  
+  wts = c()
+  for (j in 1:length(Report$ldat[Yearly_indices[i-17,]$ind_1:Yearly_indices[i-17,]$ind_2])){
+    temp_area<-length(which(station_IDs[[i]]==j))*4
+    wts[j]<-temp_area
+  }
+  # Target
+  dweight_ave_t = sum((Report$ldat[Yearly_indices[i-17,]$ind_1:Yearly_indices[i-17,]$ind_2])*wts)/sum(wts)
+  weighted_t<-dweight_ave_t
+  # Standard error calculation
+  wts = as.matrix(wts)
+  # wi/sum(wi)
+  wts_2 = wts/(sum(wts))
+  # covariance matrix for estimated lambda t
+  cov = rep$cov
+  cov_t = cov[(Yearly_indices[i-17,]$ind_1+15):(Yearly_indices[i-17,]$ind_2+15), (Yearly_indices[i-17,]$ind_1+15):(Yearly_indices[i-17,]$ind_2+15)]
+  
+  # Standard error for Dirichlet method 
+  se2_dir_t = t(wts_2)%*%cov_t%*%wts_2
+  se_t<-se2_dir_t
+  # Non-target
+  dweight_ave_nt = sum((Report$ldant[Yearly_indices[i-17,]$ind_1:Yearly_indices[i-17,]$ind_2])*wts)/sum(wts)
+  weighted_nt<-dweight_ave_nt
+  # covariance matrix for estimated lambda t
+  cov_nt = cov[(tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i-17,]$ind_1+15):(tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i-17,]$ind_2+15), (tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i-17,]$ind_1+15) :(tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i-17,]$ind_2+15)]
+  # Standard error for Dirichlet method 
+  se2_dir_nt = t(wts_2)%*%cov_nt%*%wts_2
+  se_nt<-se2_dir_nt
+  
+  area_list[[i]]<-data.frame(weighted_t,sqrt(se_t),weighted_nt,sqrt(se_nt))
+}
+
+weighted_avgs_frame_2017_stratonly<-data.frame(w_t=rep(NA,22),se_t=rep(NA,22),
+                                w_nt=rep(NA,22),se_nt=rep(NA,22))
+for (i in c(18:22)){
+  weighted_avgs_frame_2017_stratonly$w_t[i]<-area_list[[i]]$weighted_t
+  weighted_avgs_frame_2017_stratonly$se_t[i]<-area_list[[i]]$sqrt.se_t.
+  weighted_avgs_frame_2017_stratonly$w_nt[i]<-area_list[[i]]$weighted_nt
+  weighted_avgs_frame_2017_stratonly$se_nt[i]<-area_list[[i]]$sqrt.se_nt.
+}
+
+w_lamb_t<-ggplot(data=weighted_avgs_frame_2017_stratonly)+
+  geom_point(aes(x=2000:2021,y=w_t),col="red")+
+  geom_line(aes(x=2000:2021,y=w_t),col="red")+
+  geom_ribbon(aes(x=2000:2021,ymax=w_t+2*se_t,ymin=w_t-2*se_t),fill="red",alpha=0.2)+
+  theme_bw()
+
+w_lamb_nt<-ggplot(data=weighted_avgs_frame_2017_stratonly)+
+  geom_point(aes(x=2000:2021,y=w_nt),col="blue")+
+  geom_line(aes(x=2000:2021,y=w_nt),col="blue")+
+  geom_ribbon(aes(x=2000:2021,ymax=w_nt+2*se_nt,ymin=w_nt-2*se_nt),fill="blue",alpha=0.2)+
+  theme_bw()
+
+pre_geom<-c(data2017$geometry,data2018$geometry,data2019$geometry,data2020$geometry,data2021$geometry)
+
+
+all_dem_ldat<-data.frame(ldat=Report$ldat,geometry=pre_geom,Year=rep(2017:2021,times=main_n2),knotID=rep(NA,length(Report$ldat)))
+all_dem_ldat<-st_as_sf(all_dem_ldat)
+for (i in 2017:2021){
+  all_dem_ldat[all_dem_ldat$Year==i,]$knotID<-c(1:length(subset(all_dem_ldat,Year==i)$Year))
+}
+
+good_grid_area3<-subset(good_grid_area2,Year>2016)
+
+big_ID<-c()
+for (i in 1:length(2017:2021)){
+  distmat_all<-pointDistance(grid_centroids,subset(all_dem_ldat,Year==(c(2017:2021)[i])),lonlat=F)
+  polyknotID<-c()
+  for (i in 1:length(st_coordinates(grid_centroids)[,1])) {
+    polyknotID<-c(polyknotID,which(distmat_all[i,]==min(distmat_all[i,])))
+  }
+  big_ID<-c(big_ID,polyknotID)
+}
+good_grid_area3$knotID<-big_ID
+
+ldat_info_all<-left_join(good_grid_area3,st_drop_geometry(all_dem_ldat),by=c("Year","knotID"))
+
+ldat_plot_all<-ggplot()+
+  geom_sf(data=ldat_info_all,aes(fill=ldat),col=NA)+
+  scale_fill_viridis_c()+theme_bw()+
+  facet_wrap(~Year)
+ggsave(filename="all_ldat_2017plus_strat_only.png",plot=ldat_plot_all,height=15,width=15)
+
+save(rand_t,rand_nt,vess_effect_t,vess_effect_nt,weighted_avgs_frame_2017_stratonly,file="comp_stuff_2017_onwards_strat_only2.RData")
+```
+
+```{r}
+
+# load("overall_ldat_last4years.RData")
+
+
+# load("ldat_no_strat.RData")
+# rand_t_fixed<-rand_t
+# rand_nt_fixed<-rand_nt
+load("comp_stuff_fixed_only_2017_onwards_2.RData")
+weighted_avgs_frame_fixed_only_2017<-weighted_avgs_frame
+rand_t_fixed_2017<-rand_t
+rand_nt_fixed_2017<-rand_nt
+vess_t_fixed_2017<-vess_effect_t
+vess_nt_fixed_2017<-vess_effect_nt
+load("comp_stuff_fixed_only2.RData")
+weighted_avgs_frame_no_strat<-weighted_avgs_frame
+rand_t_fixed<-rand_t
+rand_nt_fixed<-rand_nt
+vess_t_fixed<-vess_effect_t
+vess_nt_fixed<-vess_effect_nt
+load("comp_stuff_2017_onwards_both2.RData")
+rand_t_both_2017<-rand_t
+rand_nt_both_2017<-rand_nt
+vess_t_both_2017<-vess_effect_t
+vess_nt_both_2017<-vess_effect_nt
+load("comp_stuff_2017_onwards_strat_only2.RData")
+rand_t_strat_2017<-rand_t
+rand_nt_strat_2017<-rand_nt
+vess_t_strat_2017<-vess_effect_t
+vess_nt_strat_2017<-vess_effect_nt
+load("all_ldat_both_data_all_years_rand_walk.RData")
+rand_t_both<-rand_t
+rand_nt_both<-rand_nt
+vess_t_both<-vess_effect_t
+vess_nt_both<-vess_effect_nt
+
+
+w_lamb_t2<-ggplot()+
+  geom_point(aes(x=2000:2021,y=weighted_avgs_frame_no_strat$w_t,col="Spatio-Temporal MEMSpa (Fixed Stations)"))+
+  geom_line(aes(x=2000:2021,y=weighted_avgs_frame_no_strat$w_t,col="Spatio-Temporal MEMSpa (Fixed Stations)"))+
+  geom_ribbon(aes(x=2000:2021,ymax=weighted_avgs_frame_no_strat$w_t+2*weighted_avgs_frame_no_strat$se_t,ymin=weighted_avgs_frame_no_strat$w_t-2*weighted_avgs_frame_no_strat$se_t,fill="Spatio-Temporal MEMSpa (Fixed Stations)"),alpha=0.2)+
+  geom_point(aes(x=2000:2021,y=weighted_avgs_frame$w_t,col="Spatio-Temporal MEMSpa (Both Datasets)"))+
+  geom_line(aes(x=2000:2021,y=weighted_avgs_frame$w_t,col="Spatio-Temporal MEMSpa (Both Datasets)"))+
+  geom_ribbon(aes(x=2000:2021,ymax=weighted_avgs_frame$w_t+2*weighted_avgs_frame$se_t,ymin=weighted_avgs_frame$w_t-2*weighted_avgs_frame$se_t,fill="Spatio-Temporal MEMSpa (Both Datasets)"),alpha=0.2)+
+  geom_point(aes(x=2000:2021,y=agg_mean$Index,col="Straight Mean (Both Datasets)"))+
+  geom_line(aes(x=2000:2021,y=agg_mean$Index,col="Straight Mean (Both Datasets)"))+
+  geom_ribbon(aes(x=2000:2021,ymax=agg_mean$Index+2*agg_sd$se,ymin=agg_mean$Index-2*agg_sd$se,fill="Straight Mean (Both Datasets)"),alpha=0.2)+
+  geom_point(aes(x=2000:2021,y=agg_mean_fixed$Index,col="Straight Mean (Fixed Stations)"))+
+  geom_line(aes(x=2000:2021,y=agg_mean_fixed$Index,col="Straight Mean (Fixed Stations)"))+
+  geom_ribbon(aes(x=2000:2021,ymax=agg_mean_fixed$Index+2*agg_sd_fixed$se,ymin=agg_mean_fixed$Index-2*agg_sd_fixed$se,fill="Straight Mean (Fixed Stations)"),alpha=0.2)+
+  scale_color_viridis_d(name="",label=c("Spatio-Temporal MEMSpa (Both Datasets)","Spatio-Temporal MEMSpa (Fixed Stations)","Straight Mean (Both Datasets)", "Straight Mean (Fixed Stations)"))+
+  scale_fill_viridis_d(name="",label=c("Spatio-Temporal MEMSpa (Both Datasets)","Spatio-Temporal MEMSpa (Fixed Stations)","Straight Mean (Both Datasets)", "Straight Mean (Fixed Stations)"))+
+  theme_bw()+ylab("Estimated Overall Index")+xlab("Year")
+ggsave(filename="comp_all_ldat_walk_ver2.png",plot=w_lamb_t2,height=7,width=10)
+
+w_ldat_2017<-ggplot()+
+  geom_point(aes(x=2017:2021,y=weighted_avgs_frame_last$w_t[18:22],col="Spatio-Temporal MEMSpa 2017+ (Both)"))+
+  geom_line(aes(x=2017:2021,y=weighted_avgs_frame_last$w_t[18:22],col="Spatio-Temporal MEMSpa 2017+ (Both)"))+
+  geom_ribbon(aes(x=2017:2021,ymax=weighted_avgs_frame_last$w_t[18:22]+2*weighted_avgs_frame_last$se_t[18:22],ymin=weighted_avgs_frame_last$w_t[18:22]-2*weighted_avgs_frame_last$se_t[18:22],fill="Spatio-Temporal MEMSpa 2017+ (Both)"),alpha=0.2)+
+    geom_point(aes(x=2017:2021,y=weighted_avgs_frame_2017_stratonly$w_t[18:22],col="Spatio-Temporal MEMSpa 2017+ (Stratified)"))+
+  geom_line(aes(x=2017:2021,y=weighted_avgs_frame_2017_stratonly$w_t[18:22],col="Spatio-Temporal MEMSpa 2017+ (Stratified)"))+
+  geom_ribbon(aes(x=2017:2021,ymax=weighted_avgs_frame_2017_stratonly$w_t[18:22]+2*weighted_avgs_frame_2017_stratonly$se_t[18:22],ymin=weighted_avgs_frame_2017_stratonly$w_t[18:22]-2*weighted_avgs_frame_2017_stratonly$se_t[18:22],fill="Spatio-Temporal MEMSpa 2017+ (Stratified)"),alpha=0.2)+
+      geom_point(aes(x=2017:2021,y=weighted_avgs_frame_fixed_only_2017$w_t[18:22],col="Spatio-Temporal MEMSpa 2017+ (Fixed)"))+
+  geom_line(aes(x=2017:2021,y=weighted_avgs_frame_fixed_only_2017$w_t[18:22],col="Spatio-Temporal MEMSpa 2017+ (Fixed)"))+
+  geom_ribbon(aes(x=2017:2021,ymax=weighted_avgs_frame_fixed_only_2017$w_t[18:22]+2*weighted_avgs_frame_fixed_only_2017$se_t[18:22],ymin=weighted_avgs_frame_fixed_only_2017$w_t[18:22]-2*weighted_avgs_frame_fixed_only_2017$se_t[18:22],fill="Spatio-Temporal MEMSpa 2017+ (Fixed)"),alpha=0.2)+
+    geom_point(aes(x=2017:2021,y=agg_mean$Index[18:22],col="Straight Mean (Both Datasets)"))+
+  geom_line(aes(x=2017:2021,y=agg_mean$Index[18:22],col="Straight Mean (Both Datasets)"))+
+  geom_ribbon(aes(x=2017:2021,ymax=agg_mean$Index[18:22]+2*agg_sd$se[18:22],ymin=agg_mean$Index[18:22]-2*agg_sd$se[18:22],fill="Straight Mean (Both Datasets)"),alpha=0.2)+
+      geom_point(aes(x=2017:2021,y=agg_mean_fixed$Index[18:22],col="Straight Mean (Fixed Stations)"))+
+  geom_line(aes(x=2017:2021,y=agg_mean_fixed$Index[18:22],col="Straight Mean (Fixed Stations)"))+
+  geom_ribbon(aes(x=2017:2021,ymax=agg_mean_fixed$Index[18:22]+2*agg_sd_fixed$se[18:22],ymin=agg_mean_fixed$Index[18:22]-2*agg_sd_fixed$se[18:22],fill="Straight Mean (Fixed Stations)"),alpha=0.2)+
+    scale_color_viridis_d(name="",label=c("Spatio-Temporal MEMSpa 2017+ (Both)","Spatio-Temporal MEMSpa 2017+ (Fixed)","Spatio-Temporal MEMSpa 2017+ (Stratified)","Straight Mean (Both Datasets)","Straight Mean (Fixed Stations)"))+
+  scale_fill_viridis_d(name="",label=c("Spatio-Temporal MEMSpa 2017+ (Both)","Spatio-Temporal MEMSpa 2017+ (Fixed)","Spatio-Temporal MEMSpa 2017+ (Stratified)","Straight Mean (Both Datasets)","Straight Mean (Fixed Stations)"))+
+  theme_bw()+ylab("Estimated Overall Index")+xlab("Year")
+ggsave(filename="comp_all_ldat_2017_walk_ver2.png",plot=w_ldat_2017,height=7,width=10)
+
+w_lamb_nt2<-ggplot()+
+  geom_point(aes(x=2000:2021,y=weighted_avgs_frame_no_strat$w_nt,col="Spatio-Temporal MEMSpa (Fixed Stations)"))+
+  geom_line(aes(x=2000:2021,y=weighted_avgs_frame_no_strat$w_nt,col="Spatio-Temporal MEMSpa (Fixed Stations)"))+
+  geom_ribbon(aes(x=2000:2021,ymax=weighted_avgs_frame_no_strat$w_nt+2*weighted_avgs_frame_no_strat$se_nt,ymin=weighted_avgs_frame_no_strat$w_nt-2*weighted_avgs_frame_no_strat$se_nt,fill="Spatio-Temporal MEMSpa (Fixed Stations)"),alpha=0.2)+
+  geom_point(aes(x=2000:2021,y=weighted_avgs_frame$w_nt,col="Spatio-Temporal MEMSpa (Both Datasets)"))+
+  geom_line(aes(x=2000:2021,y=weighted_avgs_frame$w_nt,col="Spatio-Temporal MEMSpa (Both Datasets)"))+
+  geom_ribbon(aes(x=2000:2021,ymax=weighted_avgs_frame$w_nt+2*weighted_avgs_frame$se_nt,ymin=weighted_avgs_frame$w_nt-2*weighted_avgs_frame$se_nt,fill="Spatio-Temporal MEMSpa (Both Datasets)"),alpha=0.2)+
+  # geom_point(aes(x=2000:2021,y=agg_mean$Index,col="Straight Mean"))+
+  # geom_line(aes(x=2000:2021,y=agg_mean$Index,col="Straight Mean"))+
+  # geom_ribbon(aes(x=2000:2021,ymax=agg_mean$Index+2*agg_sd$se,ymin=agg_mean$Index-2*agg_sd$se,fill="Straight Mean"),alpha=0.2)+
+  scale_color_viridis_d(name="",label=c("Spatio-Temporal MEMSpa (Both Datasets)","Spatio-Temporal MEMSpa (Fixed Stations)"))+
+  scale_fill_viridis_d(name="",label=c("Spatio-Temporal MEMSpa (Both Datasets)","Spatio-Temporal MEMSpa (Fixed Stations)"))+
+  theme_bw()+ylab("Estimated Overall Index")+xlab("Year")
+ggsave(filename="comp_all_ldant_walk.png",plot=w_lamb_nt2,height=7,width=10)
+
+w_ldant_2017<-ggplot()+
+  geom_point(aes(x=2017:2021,y=weighted_avgs_frame_last$w_nt[18:22],col="Spatio-Temporal MEMSpa 2017+ (Both)"))+
+  geom_line(aes(x=2017:2021,y=weighted_avgs_frame_last$w_nt[18:22],col="Spatio-Temporal MEMSpa 2017+ (Both)"))+
+  geom_ribbon(aes(x=2017:2021,ymax=weighted_avgs_frame_last$w_nt[18:22]+2*weighted_avgs_frame_last$se_nt[18:22],ymin=weighted_avgs_frame_last$w_nt[18:22]-2*weighted_avgs_frame_last$se_nt[18:22],fill="Spatio-Temporal MEMSpa 2017+ (Both)"),alpha=0.2)+
+    geom_point(aes(x=2017:2021,y=weighted_avgs_frame_2017_stratonly$w_nt[18:22],col="Spatio-Temporal MEMSpa 2017+ (Stratified)"))+
+  geom_line(aes(x=2017:2021,y=weighted_avgs_frame_2017_stratonly$w_nt[18:22],col="Spatio-Temporal MEMSpa 2017+ (Stratified)"))+
+  geom_ribbon(aes(x=2017:2021,ymax=weighted_avgs_frame_2017_stratonly$w_nt[18:22]+2*weighted_avgs_frame_2017_stratonly$se_nt[18:22],ymin=weighted_avgs_frame_2017_stratonly$w_nt[18:22]-2*weighted_avgs_frame_2017_stratonly$se_nt[18:22],fill="Spatio-Temporal MEMSpa 2017+ (Stratified)"),alpha=0.2)+
+      geom_point(aes(x=2017:2021,y=weighted_avgs_frame_fixed_only_2017$w_nt[18:22],col="Spatio-Temporal MEMSpa 2017+ (Fixed)"))+
+  geom_line(aes(x=2017:2021,y=weighted_avgs_frame_fixed_only_2017$w_nt[18:22],col="Spatio-Temporal MEMSpa 2017+ (Fixed)"))+
+  geom_ribbon(aes(x=2017:2021,ymax=weighted_avgs_frame_fixed_only_2017$w_nt[18:22]+2*weighted_avgs_frame_fixed_only_2017$se_nt[18:22],ymin=weighted_avgs_frame_fixed_only_2017$w_nt[18:22]-2*weighted_avgs_frame_fixed_only_2017$se_nt[18:22],fill="Spatio-Temporal MEMSpa 2017+ (Fixed)"),alpha=0.2)+
+    scale_color_viridis_d(name="",label=c("Spatio-Temporal MEMSpa 2017+ (Both)","Spatio-Temporal MEMSpa 2017+ (Fixed)","Spatio-Temporal MEMSpa 2017+ (Stratified)"))+
+  scale_fill_viridis_d(name="",label=c("Spatio-Temporal MEMSpa 2017+ (Both)","Spatio-Temporal MEMSpa 2017+ (Fixed)","Spatio-Temporal MEMSpa 2017+ (Stratified)"))+
+  theme_bw()+ylab("Estimated Overall Index")+xlab("Year")
+ggsave(filename="comp_all_ldant_2017_walk.png",plot=w_ldant_2017,height=7,width=10)
+
+#checking for persistence
+# load("both_strat_fixed_ldat_se.RData")
+
+#Associate each ldat with fixed station, so can look if there are drastic changes over time.
+#Can likely do that 2-way anova thing with interaction by splitting the time series in "eras", as there are no replicates from one year to the next
+
+persistence_frame<-data.frame(Year=sf_rem_fix_data$YEAR, Station=sf_rem_fix_data$STATION,halibut=sf_rem_fix_data$total_target_species)
+
+pers_frame<-subset(persistence_frame,Year %in% c(2000:2021))
+
+non_agg_aov<-aov(halibut~Station+Year,data=pers_frame)
+
+pers_frame$agg_Year<-rep(NA,length(pers_frame$Station))
+for (i in 1:length(pers_frame$Station)){
+  if (pers_frame$Year[i] %in% c(2000:2002)) pers_frame$agg_Year[i]<-1
+  if (pers_frame$Year[i] %in% c(2003:2005)) pers_frame$agg_Year[i]<-2
+  if (pers_frame$Year[i] %in% c(2006:2008)) pers_frame$agg_Year[i]<-3
+  if (pers_frame$Year[i] %in% c(2009:2011)) pers_frame$agg_Year[i]<-4
+  if (pers_frame$Year[i] %in% c(2012:2014)) pers_frame$agg_Year[i]<-5
+  if (pers_frame$Year[i] %in% c(2015:2017)) pers_frame$agg_Year[i]<-6
+  if (pers_frame$Year[i] %in% c(2018:2021)) pers_frame$agg_Year[i]<-7
+}
+
+agg_aov<-aov(halibut~as.factor(agg_Year)*as.factor(Station),data=pers_frame)
+agg_lm<-MASS::glm.nb(halibut~agg_Year:Station,data=pers_frame)
+
+#All of this stuff didn't work great, but seems to indicate there might be issues of persistence, meaning that the bias from fixed stations would be increased/present, need to keep this into account
+
+#Will use the observed catch rates (so number of halibut scaled by soak time) to replace density and use the persistence index analysis
+
+obs_rates_frame<-data.frame(Year=sf_rem_fix_data$YEAR, Station=sf_rem_fix_data$STATION,rate=(sf_rem_fix_data$total_target_species*1000/sf_rem_fix_data$NUM_HOOK_HAUL)/sf_rem_fix_data$SOAKMINP3P1)
+
+m1<-matrix(ncol=22,nrow=22)
+m2<-matrix(ncol=22,nrow=22)
+sy2<-matrix(ncol=22,nrow=22)
+ss2<-matrix(ncol=22,nrow=22)
+persist<-matrix(ncol=22,nrow=22)
+for (i in 2000:2021){
+  for (j in 2000:2021){
+    if (i==j) {}
+    else if (j<i) {
+      persist[i-1999,j-1999] <- persist[j-1999,i-1999]
+    }
+    else {
+        sub1<-subset(obs_rates_frame,Year==i)
+        sub2<-subset(obs_rates_frame,Year==j)
+        m1[i-1999,j-1999]<-length(unique(sub1$Station))
+        m2[i-1999,j-1999]<-length(unique(sub2$Station))
+        match_stat<-sub1$Station[which(sub1$Station %in% sub2$Station)]
+        mean_d<-mean(subset(sub1,Station %in% match_stat)$rate-subset(sub2,Station %in% match_stat)$rate)
+        temp_sy2<-0
+        for (b in match_stat){
+          rep_stat1<-subset(sub1,Station==b)$rate
+          rep_stat2<-subset(sub2,Station==b)$rate
+          temp_sy2<-temp_sy2+(((rep_stat1-rep_stat2)-mean_d)^2)/(length(match_stat)-1)
+        }
+        sy2[i-1999,j-1999]<-temp_sy2
+        sum1<-sum(subset(sub1,Station %in% match_stat)$rate-mean(subset(sub1,Station %in% match_stat)$rate)^2)
+        sum2<-sum(subset(sub2,Station %in% match_stat)$rate-mean(subset(sub2,Station %in% match_stat)$rate)^2)
+        ss2[i-1999,j-1999]<-(sum1+sum2)/(m1[i-1999,j-1999]+m2[i-1999,j-1999]-2)
+        persist[i-1999,j-1999]<-(sy2[i-1999,j-1999]/4)/(ss2[i-1999,j-1999]-(sy2[i-1999,j-1999]/4))
+    }
+  }
+}
+
+#Yay! This tells me that persistency seems to be pretty good, where the worst are the years with a super large spike in 2017-2018, which might explain why there is a pretty large difference between the model fit with just the fixed stations
+
+persist_df<-data.frame(Year1=rep(2000:2021,each=22),Year2=rep(2000:2021,22),Persistence=as.vector(persist))
+persist_t_plot<-ggplot()+geom_tile(data=persist_df,aes(x=Year1,y=Year2,fill=Persistence),col="white")+scale_fill_viridis_c(name="Persistence Index")+theme_bw()
+ggsave(filename="persist_raster_plot_walk.png")
+
+persistence_nt_frame<-data.frame(Year=sf_rem_fix_data$YEAR, Station=sf_rem_fix_data$STATION,other=sf_rem_fix_data$total_other_species)
+
+pers_nt_frame<-subset(persistence_nt_frame,Year %in% c(2000:2021))
+
+non_agg_aov_nt<-aov(other~Station+Year,data=pers_nt_frame)
+
+pers_nt_frame$agg_Year<-rep(NA,length(pers_nt_frame$Station))
+for (i in 1:length(pers_nt_frame$Station)){
+  if (pers_nt_frame$Year[i] %in% c(2000:2002)) pers_nt_frame$agg_Year[i]<-1
+  if (pers_nt_frame$Year[i] %in% c(2003:2005)) pers_nt_frame$agg_Year[i]<-2
+  if (pers_nt_frame$Year[i] %in% c(2006:2008)) pers_nt_frame$agg_Year[i]<-3
+  if (pers_nt_frame$Year[i] %in% c(2009:2011)) pers_nt_frame$agg_Year[i]<-4
+  if (pers_nt_frame$Year[i] %in% c(2012:2014)) pers_nt_frame$agg_Year[i]<-5
+  if (pers_nt_frame$Year[i] %in% c(2015:2017)) pers_nt_frame$agg_Year[i]<-6
+  if (pers_nt_frame$Year[i] %in% c(2018:2021)) pers_nt_frame$agg_Year[i]<-7
+}
+
+agg_aov_nt<-aov(other~as.factor(agg_Year)*as.factor(Station),data=pers_nt_frame)
+agg_lm_nt<-MASS::glm.nb(other~agg_Year:Station,data=pers_nt_frame)
+
+#All of this stuff didn't work great, but seems to indicate there might be issues of persistence, meaning that the bias from fixed stations would be increased/present, need to keep this into account
+
+#Will use the observed catch rates (so number of halibut scaled by soak time) to replace density and use the persistence index analysis
+
+obs_rates_frame_nt<-data.frame(Year=sf_rem_fix_data$YEAR, Station=sf_rem_fix_data$STATION,rate=(sf_rem_fix_data$total_other_species*1000/sf_rem_fix_data$NUM_HOOK_HAUL)/sf_rem_fix_data$SOAKMINP3P1)
+
+m1<-matrix(ncol=22,nrow=22)
+m2<-matrix(ncol=22,nrow=22)
+sy2<-matrix(ncol=22,nrow=22)
+ss2<-matrix(ncol=22,nrow=22)
+persist_nt<-matrix(ncol=22,nrow=22)
+for (i in 2000:2021){
+  for (j in 2000:2021){
+    if (i==j) {}
+    else if (j<i) {
+      persist_nt[i-1999,j-1999] <- persist_nt[j-1999,i-1999]
+    }
+    else {
+        sub1<-subset(obs_rates_frame_nt,Year==i)
+        sub2<-subset(obs_rates_frame_nt,Year==j)
+        m1[i-1999,j-1999]<-length(unique(sub1$Station))
+        m2[i-1999,j-1999]<-length(unique(sub2$Station))
+        match_stat<-sub1$Station[which(sub1$Station %in% sub2$Station)]
+        mean_d<-mean(subset(sub1,Station %in% match_stat)$rate-subset(sub2,Station %in% match_stat)$rate)
+        temp_sy2<-0
+        for (b in match_stat){
+          rep_stat1<-subset(sub1,Station==b)$rate
+          rep_stat2<-subset(sub2,Station==b)$rate
+          temp_sy2<-temp_sy2+(((rep_stat1-rep_stat2)-mean_d)^2)/(length(match_stat)-1)
+        }
+        sy2[i-1999,j-1999]<-temp_sy2
+        sum1<-sum(subset(sub1,Station %in% match_stat)$rate-mean(subset(sub1,Station %in% match_stat)$rate)^2)
+        sum2<-sum(subset(sub2,Station %in% match_stat)$rate-mean(subset(sub2,Station %in% match_stat)$rate)^2)
+        ss2[i-1999,j-1999]<-(sum1+sum2)/(m1[i-1999,j-1999]+m2[i-1999,j-1999]-2)
+        persist_nt[i-1999,j-1999]<-(sy2[i-1999,j-1999]/4)/(ss2[i-1999,j-1999]-(sy2[i-1999,j-1999]/4))
+    }
+  }
+}
+
+persist_nt_df<-data.frame(Year1=rep(2000:2021,each=22),Year2=rep(2000:2021,22),Persistence=as.vector(persist_nt))
+persist_nt_plot<-ggplot()+geom_tile(data=persist_nt_df,aes(x=Year1,y=Year2,fill=Persistence),col="white")+scale_fill_viridis_c(name="Persistence Index")+theme_bw()
+ggsave(filename="persist_nt_raster_plot_walk.png")
+
+log_persist_nt_plot<-ggplot()+geom_tile(data=persist_nt_df,aes(x=Year1,y=Year2,fill=log(Persistence)),col="white")+scale_fill_viridis_c(name="Log Persistence Index")+theme_bw()
+ggsave(filename="log_persist_nt_raster_plot_walk.png")
+
+rands_int_2017<-ggplot()+
+  geom_point(aes(x=2017:2021,y=rand_t_both_2017$val[18:22],col="Both Datasets",shape="Target Species"))+
+  geom_line(aes(x=2017:2021,y=rand_t_both_2017$val[18:22],col="Both Datasets",lty="Target Species"))+
+  geom_ribbon(aes(x=2017:2021,ymin=rand_t_both_2017$val[18:22]-rand_t_both_2017$sd[18:22],ymax=rand_t_both_2017$val[18:22]+rand_t_both_2017$sd[18:22],col="Both Datasets",fill="Both Datasets"),alpha=0.2)+
+  geom_point(aes(x=2017:2021,y=rand_t_fixed_2017$val[18:22],col="Fixed Stations",shape="Target Species"))+
+  geom_line(aes(x=2017:2021,y=rand_t_fixed_2017$val[18:22],col="Fixed Stations",lty="Target Species"))+
+  geom_ribbon(aes(x=2017:2021,ymin=rand_t_fixed_2017$val[18:22]-rand_t_fixed_2017$sd[18:22],ymax=rand_t_fixed_2017$val[18:22]+rand_t_fixed_2017$sd[18:22],col="Fixed Stations",fill="Fixed Stations"),alpha=0.2)+
+  geom_point(aes(x=2017:2021,y=rand_t_strat_2017$val[18:22],col="Stratified Data",shape="Target Species"))+
+  geom_line(aes(x=2017:2021,y=rand_t_strat_2017$val[18:22],col="Stratified Data",lty="Target Species"))+
+  geom_ribbon(aes(x=2017:2021,ymin=rand_t_strat_2017$val[18:22]-rand_t_strat_2017$sd[18:22],ymax=rand_t_strat_2017$val[18:22]+rand_t_strat_2017$sd[18:22],col="Stratified Data",fill="Stratified Data"),alpha=0.2)+
+    geom_point(aes(x=2017:2021,y=rand_nt_both_2017$val[18:22],col="Both Datasets",shape="Non-target Species"))+
+  geom_line(aes(x=2017:2021,y=rand_nt_both_2017$val[18:22],col="Both Datasets",lty="Non-target Species"))+
+  geom_ribbon(aes(x=2017:2021,ymin=rand_nt_both_2017$val[18:22]-rand_nt_both_2017$sd[18:22],ymax=rand_nt_both_2017$val[18:22]+rand_nt_both_2017$sd[18:22],col="Both Datasets",fill="Both Datasets"),alpha=0.2)+
+  geom_point(aes(x=2017:2021,y=rand_nt_fixed_2017$val[18:22],col="Fixed Stations",shape="Non-target Species"))+
+  geom_line(aes(x=2017:2021,y=rand_nt_fixed_2017$val[18:22],col="Fixed Stations",lty="Non-target Species"))+
+  geom_ribbon(aes(x=2017:2021,ymin=rand_nt_fixed_2017$val[18:22]-rand_nt_fixed_2017$sd[18:22],ymax=rand_nt_fixed_2017$val[18:22]+rand_nt_fixed_2017$sd[18:22],col="Fixed Stations",fill="Fixed Stations"),alpha=0.2)+
+  geom_point(aes(x=2017:2021,y=rand_nt_strat_2017$val[18:22],col="Stratified Data",shape="Non-target Species"))+
+  geom_line(aes(x=2017:2021,y=rand_nt_strat_2017$val[18:22],col="Stratified Data",lty="Non-target Species"))+
+  geom_ribbon(aes(x=2017:2021,ymin=rand_nt_strat_2017$val[18:22]-rand_nt_strat_2017$sd[18:22],ymax=rand_nt_strat_2017$val[18:22]+rand_nt_strat_2017$sd[18:22],col="Stratified Data",fill="Stratified Data"),alpha=0.2)+
+  scale_color_viridis_d(name="",labels=c("Both Datasets","Fixed Stations","Stratified Data"))+
+  scale_fill_viridis_d(name="",labels=c("Both Datasets","Fixed Stations","Stratified Data"))+
+  theme_bw()+ylab("Random Intercept")+xlab("Year")
+ggsave(filename="rand_int_2017_walk.png",plot=rands_int_2017)
+
+rands_int<-ggplot()+
+  geom_point(aes(x=2000:2021,y=rand_t_both$val,col="Both Datasets",shape="Target Species"))+
+  geom_line(aes(x=2000:2021,y=rand_t_both$val,col="Both Datasets",lty="Target Species"))+
+  geom_ribbon(aes(x=2000:2021,ymin=rand_t_both$val-rand_t_both$sd,ymax=rand_t_both$val+rand_t_both$sd,col="Both Datasets",fill="Both Datasets"),alpha=0.2)+
+  geom_point(aes(x=2000:2021,y=rand_t_fixed$val,col="Fixed Stations",shape="Target Species"))+
+  geom_line(aes(x=2000:2021,y=rand_t_fixed$val,col="Fixed Stations",lty="Target Species"))+
+  geom_ribbon(aes(x=2000:2021,ymin=rand_t_fixed$val-rand_t_fixed$sd,ymax=rand_t_fixed$val+rand_t_fixed$sd,col="Fixed Stations",fill="Fixed Stations"),alpha=0.2)+
+    geom_point(aes(x=2000:2021,y=rand_nt_both$val,col="Both Datasets",shape="Non-target Species"))+
+  geom_line(aes(x=2000:2021,y=rand_nt_both$val,col="Both Datasets",lty="Non-target Species"))+
+  geom_ribbon(aes(x=2000:2021,ymin=rand_nt_both$val-rand_nt_both$sd,ymax=rand_nt_both$val+rand_nt_both$sd,col="Both Datasets",fill="Both Datasets"),alpha=0.2)+
+  geom_point(aes(x=2000:2021,y=rand_nt_fixed$val,col="Fixed Stations",shape="Non-target Species"))+
+  geom_line(aes(x=2000:2021,y=rand_nt_fixed$val,col="Fixed Stations",lty="Non-target Species"))+
+  geom_ribbon(aes(x=2000:2021,ymin=rand_nt_fixed$val-rand_nt_fixed$sd,ymax=rand_nt_fixed$val+rand_nt_fixed$sd,col="Fixed Stations",fill="Fixed Stations"),alpha=0.2)+
+  scale_color_viridis_d(name="",labels=c("Both Datasets","Fixed Stations"))+
+  scale_fill_viridis_d(name="",labels=c("Both Datasets","Fixed Stations"))+
+  theme_bw()+ylab("Random Intercept")+xlab("Year")
+ggsave(filename="rand_int_walk.png",plot=rands_int)
+
+vess_plot_t<-ggplot()+
+  geom_histogram(aes(x=vess_t_both$val,fill="Both Datasets",col="Both Datasets"),alpha=0.2)+
+  geom_histogram(aes(x=vess_t_fixed$val,fill="Fixed Stations",col="Fixed Stations"),alpha=0.2)+
+  geom_histogram(aes(x=vess_t_both_2017$val,fill="Both Datasets 2017+",col="Both Datasets 2017+"),alpha=0.2)+
+    geom_histogram(aes(x=vess_t_fixed_2017$val,fill="Fixed Stations 2017+",col="Fixed Stations 2017+"),alpha=0.2)+
+      geom_histogram(aes(x=vess_t_strat_2017$val,fill="Stratified Data 2017+",col="Stratified Data 2017+"),alpha=0.2)+
+  scale_color_viridis_d(name="")+
+  scale_fill_viridis_d(name="")+
+  ylab("Count")+xlab("Estimated Vessel Effect")+
+  theme_bw()
+ggsave(filename="vess_eff_t_walk.png",plot=vess_plot_t)
+
+vess_plot_nt<-ggplot()+
+  geom_histogram(aes(x=vess_nt_both$val,fill="Both Datasets",col="Both Datasets"),alpha=0.2)+
+  geom_histogram(aes(x=vess_nt_fixed$val,fill="Fixed Stations",col="Fixed Stations"),alpha=0.2)+
+  geom_histogram(aes(x=vess_nt_both_2017$val,fill="Both Datasets 2017+",col="Both Datasets 2017+"),alpha=0.2)+
+    geom_histogram(aes(x=vess_nt_fixed_2017$val,fill="Fixed Stations 2017+",col="Fixed Stations 2017+"),alpha=0.2)+
+      geom_histogram(aes(x=vess_nt_strat_2017$val,fill="Stratified Data 2017+",col="Stratified Data 2017+"),alpha=0.2)+
+  scale_color_viridis_d(name="")+
+  scale_fill_viridis_d(name="")+
+  ylab("Count")+xlab("Estimated Vessel Effect")+
+  theme_bw()
+ggsave(filename="vess_eff_nt_walk.png",plot=vess_plot_nt)
+  
+
+load("good_rand_walk_2017plus_output.RData")
+rep_both_2017<-rep
+Report_both_2017<-Report
+
+load("good_rand_walk_run.RData")
+rep_both_all<-rep
+Report_both_all<-Report
+
+load("strat_only_run_rand_walk.RData")
+rep_strat_2017<-rep
+Report_strat_2017<-Report
+
+load("fixed_only_rand_walk_2017plus.RData")
+rep_fixed_2017<-rep
+Report_fixed_2017<-Report
+
+load("rand_walk_fixed_only.RData")
+rep_fixed<-rep
+Report_fixed<-Report
+
+phi_ts<-data.frame(val=c(rep_both_all$value[which(names(rep_both_all$value)=="phit")],rep_fixed$value[which(names(rep_fixed$value)=="phit")],rep_strat_2017$value[which(names(rep_strat_2017$value)=="phit")],rep_fixed_2017$value[which(names(rep_fixed_2017$value)=="phit")],rep_both_2017$value[which(names(rep_both_2017$value)=="phit")]),se=c(rep_both_all$sd[which(names(rep_both_all$value)=="phit")],rep_fixed$sd[which(names(rep_fixed$value)=="phit")],rep_strat_2017$sd[which(names(rep_strat_2017$value)=="phit")],rep_fixed_2017$sd[which(names(rep_fixed_2017$value)=="phit")],rep_both_2017$sd[which(names(rep_both_2017$value)=="phit")]),source=c("Both Datasets","Fixed Stations","Stratified Data (2017+)","Fixed Stations (2017+)","Both Datasets (2017+)"))
+
+phi_nts<-data.frame(val=c(rep_both_all$value[which(names(rep_both_all$value)=="phint")],rep_fixed$value[which(names(rep_fixed$value)=="phint")],rep_strat_2017$value[which(names(rep_strat_2017$value)=="phint")],rep_fixed_2017$value[which(names(rep_fixed_2017$value)=="phint")],rep_both_2017$value[which(names(rep_both_2017$value)=="phint")]),se=c(rep_both_all$sd[which(names(rep_both_all$value)=="phint")],rep_fixed$sd[which(names(rep_fixed$value)=="phint")],rep_strat_2017$sd[which(names(rep_strat_2017$value)=="phint")],rep_fixed_2017$sd[which(names(rep_fixed_2017$value)=="phint")],rep_both_2017$sd[which(names(rep_both_2017$value)=="phint")]),source=c("Both Datasets","Fixed Stations","Stratified Data (2017+)","Fixed Stations (2017+)","Both Datasets (2017+)"))
+
+var_ts<-data.frame(val=c(rep_both_all$value[which(names(rep_both_all$value)=="vart")],rep_fixed$value[which(names(rep_fixed$value)=="vart")],rep_strat_2017$value[which(names(rep_strat_2017$value)=="vart")],rep_fixed_2017$value[which(names(rep_fixed_2017$value)=="vart")],rep_both_2017$value[which(names(rep_both_2017$value)=="vart")]),se=c(rep_both_all$sd[which(names(rep_both_all$value)=="vart")],rep_fixed$sd[which(names(rep_fixed$value)=="vart")],rep_strat_2017$sd[which(names(rep_strat_2017$value)=="vart")],rep_fixed_2017$sd[which(names(rep_fixed_2017$value)=="vart")],rep_both_2017$sd[which(names(rep_both_2017$value)=="vart")]),source=c("Both Datasets","Fixed Stations","Stratified Data (2017+)","Fixed Stations (2017+)","Both Datasets (2017+)"))
+
+var_nts<-data.frame(val=c(rep_both_all$value[which(names(rep_both_all$value)=="varnt")],rep_fixed$value[which(names(rep_fixed$value)=="varnt")],rep_strat_2017$value[which(names(rep_strat_2017$value)=="varnt")],rep_fixed_2017$value[which(names(rep_fixed_2017$value)=="varnt")],rep_both_2017$value[which(names(rep_both_2017$value)=="varnt")]),se=c(rep_both_all$sd[which(names(rep_both_all$value)=="varnt")],rep_fixed$sd[which(names(rep_fixed$value)=="varnt")],rep_strat_2017$sd[which(names(rep_strat_2017$value)=="varnt")],rep_fixed_2017$sd[which(names(rep_fixed_2017$value)=="varnt")],rep_both_2017$sd[which(names(rep_both_2017$value)=="varnt")]),source=c("Both Datasets","Fixed Stations","Stratified Data (2017+)","Fixed Stations (2017+)","Both Datasets (2017+)"))
+
+pnts<-data.frame(val=c(Report_both_all$pnt,Report_fixed$pnt,Report_strat_2017$pnt,Report_fixed_2017$pnt,Report_both_2017$pnt),se=c(rep_both_all$sd[which(names(rep_both_all$value)=="pnt")],rep_fixed$sd[which(names(rep_fixed$value)=="pnt")],rep_strat_2017$sd[which(names(rep_strat_2017$value)=="pnt")],rep_fixed_2017$sd[which(names(rep_fixed_2017$value)=="pnt")],rep_both_2017$sd[which(names(rep_both_2017$value)=="pnt")]),source=c("Both Datasets","Fixed Stations","Stratified Data (2017+)","Fixed Stations (2017+)","Both Datasets (2017+)"))
+
+
+phi_comp_figures<-ggplot()+
+  geom_point(data=phi_ts,aes(x=source,y=val,col="Phi_t",shape="Phi_t"))+
+  geom_errorbar(data=phi_ts,aes(x=source,ymin=val-2*se,ymax=val+2*se,col="Phi_t"))+
+    geom_point(data=phi_nts,aes(x=source,y=val,col="Phi_nt",shape="Phi_nt"))+
+  geom_errorbar(data=phi_nts,aes(x=source,ymin=val-2*se,ymax=val+2*se,col="Phi_nt"))+
+  scale_color_viridis_d(name="Parameter",labels=c("Phi_nt","Phi_t"))+
+  theme_bw()+xlab("Model Fit")+ylab("Parameter Estimate")
+ggsave(filename="phi_comp_walk.png",plot=phi_comp_figures)
+
+var_comp_figure<-ggplot()+
+    geom_point(data=var_ts,aes(x=source,y=val,col="Var_t",shape="Var_t"))+
+  geom_errorbar(data=var_ts,aes(x=source,ymin=val-2*se,ymax=val+2*se,col="Var_t"))+
+      geom_point(data=var_nts,aes(x=source,y=val,col="Var_nt",shape="Var_nt"))+
+  geom_errorbar(data=var_nts,aes(x=source,ymin=val-2*se,ymax=val+2*se,col="Var_nt"))+
+    scale_color_viridis_d(name="Parameter",labels=c("Var_nt","Var_t"))+
+  theme_bw()+xlab("Model Fit")+ylab("Parameter Estimate")
+ggsave(filename="var_comp_walk.png",plot=var_comp_figure)
+
+pnt_comp<-ggplot()+
+        geom_point(data=pnts,aes(x=source,y=val,col="p_nt",shape="p_nt"))+
+  geom_errorbar(data=pnts,aes(x=source,ymin=val-2*se,ymax=val+2*se,col="p_nt"))+
+    theme_bw()+xlab("Model Fit")+ylab("Parameter Estimate")
+ggsave(filename="pnt_comp_walk.png",plot=pnt_comp)
+
+```
+
+
+
+
+
+
