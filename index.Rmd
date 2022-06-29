@@ -4,11 +4,11 @@ year: 2022
 report_number: nnn
 author: |
   Raphaël R. McDonald^1^,
-  Cornelia E. den Heyer^2^,
   Brad Hubley^2^,
   Lingbo Li^2^,
+  Cornelia E. den Heyer^2^,
   and Joanna Mills Flemming^1^
-author_list: "McDonald, R.R., den Heyer, C.E., Hubley, B., Li, L., and Mills Flemming, J."
+author_list: "McDonald, R.R., Hubley, B., Li, L., den Heyer, C.E., and Mills Flemming, J."
 region: Maritimes Region
 isbn: ""
 address: |
