@@ -1,0 +1,380 @@
+---
+title: "Analyzing model fits and CV"
+author: "Raphaël McDonald"
+date: "8/16/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r aic-bic-full}
+library(dplyr)
+library(TMB)
+library(ggplot2)
+
+#For full dataset:
+load("rand_walk_output.RData")
+load("rand_mean_output.RData")
+load("rand_slope_output.RData")
+load("rand_AR1_output.RData")
+
+#All converged, so previous false convergence for slope must have been a mistake
+
+#Observation RMSE
+check_frame_walk<-(obj_walk$env$data$A/rowSums(obj_walk$env$data$A))-Report_walk$q
+check_frame_mean<-(obj_mean$env$data$A/rowSums(obj_mean$env$data$A))-Report_mean$q
+check_frame_slope<-(obj_slope$env$data$A/rowSums(obj_slope$env$data$A))-Report_slope$q
+check_frame_AR1<-(obj_AR1$env$data$A/rowSums(obj_AR1$env$data$A))-Report_AR1$q
+
+
+check_frame2_walk<-(obj_walk$env$data$H/rowSums(obj_walk$env$data$H))-Report_walk$p
+check_frame2_mean<-(obj_mean$env$data$H/rowSums(obj_mean$env$data$H))-Report_mean$p
+check_frame2_slope<-(obj_slope$env$data$H/rowSums(obj_slope$env$data$H))-Report_slope$p
+check_frame2_AR1<-(obj_AR1$env$data$H/rowSums(obj_AR1$env$data$H))-Report_AR1$p
+
+overall_rmse_walk<-sqrt(mean(check_frame_walk^2))+sqrt(mean(check_frame2_walk^2))
+overall_rmse_mean<-sqrt(mean(check_frame_mean^2))+sqrt(mean(check_frame2_mean^2))
+overall_rmse_slope<-sqrt(mean(check_frame_slope^2))+sqrt(mean(check_frame2_slope^2))
+overall_rmse_AR1<-sqrt(mean(check_frame_AR1^2))+sqrt(mean(check_frame2_AR1^2))
+
+target_rmse_walk<-sqrt(mean(check_frame_walk[,1]^2))+sqrt(mean(check_frame2_walk[,2]^2))
+target_rmse_mean<-sqrt(mean(check_frame_mean[,1]^2))+sqrt(mean(check_frame2_mean[,2]^2))
+target_rmse_slope<-sqrt(mean(check_frame_slope[,1]^2))+sqrt(mean(check_frame2_slope[,2]^2))
+target_rmse_AR1<-sqrt(mean(check_frame_AR1[,1]^2))+sqrt(mean(check_frame2_AR1[,2]^2))
+
+nontarget_rmse_walk<-sqrt(mean(check_frame_walk[,2]^2))+sqrt(mean(check_frame2_walk[,3]^2))
+nontarget_rmse_mean<-sqrt(mean(check_frame_mean[,2]^2))+sqrt(mean(check_frame2_mean[,3]^2))
+nontarget_rmse_slope<-sqrt(mean(check_frame_slope[,2]^2))+sqrt(mean(check_frame2_slope[,3]^2))
+nontarget_rmse_AR1<-sqrt(mean(check_frame_AR1[,2]^2))+sqrt(mean(check_frame2_AR1[,3]^2))
+
+bhook_rmse_walk<-sqrt(mean(check_frame_walk[,3]^2))+sqrt(mean(check_frame2_walk[,4]^2))
+bhook_rmse_mean<-sqrt(mean(check_frame_mean[,3]^2))+sqrt(mean(check_frame2_mean[,4]^2))
+bhook_rmse_slope<-sqrt(mean(check_frame_slope[,3]^2))+sqrt(mean(check_frame2_slope[,4]^2))
+bhook_rmse_AR1<-sqrt(mean(check_frame_AR1[,3]^2))+sqrt(mean(check_frame2_AR1[,4]^2))
+
+#AIC
+calc_aic<-function(k,ll){return(2*k-2*ll)}
+
+aic_walk<-calc_aic(length(obj_walk$par),-sum(Report_walk$nll_joint))
+aic_mean<-calc_aic(length(obj_mean$par),-sum(Report_mean$nll_joint))
+aic_slope<-calc_aic(length(obj_slope$par),-sum(Report_slope$nll_joint))
+aic_AR1<-calc_aic(length(obj_AR1$par),-sum(Report_AR1$nll_joint))
+
+calc_bic<-function(k,n,ll){return(k*log(n)-2*ll)}
+
+bic_walk<-calc_bic(length(obj_walk$par),sum(obj_walk$env$data$n),-sum(Report_walk$nll_joint))
+bic_mean<-calc_bic(length(obj_mean$par),sum(obj_mean$env$data$n),-sum(Report_mean$nll_joint))
+bic_slope<-calc_bic(length(obj_slope$par),sum(obj_slope$env$data$n),-sum(Report_slope$nll_joint))
+bic_AR1<-calc_bic(length(obj_AR1$par),sum(obj_AR1$env$data$n),-sum(Report_AR1$nll_joint))
+
+t_field_rmse_walk<-sqrt(mean((Report_walk$omegat)^2))
+nt_field_rmse_walk<-sqrt(mean((Report_walk$omegant)^2))
+t_field_rmse_mean<-sqrt(mean((Report_mean$omegat)^2))
+nt_field_rmse_mean<-sqrt(mean((Report_mean$omegant)^2))
+t_field_rmse_slope<-sqrt(mean((Report_slope$omegat)^2))
+nt_field_rmse_slope<-sqrt(mean((Report_slope$omegant)^2))
+t_field_rmse_AR1<-sqrt(mean((Report_AR1$omegat)^2))
+nt_field_rmse_AR1<-sqrt(mean((Report_AR1$omegant)^2))
+
+valid_frame_full<-data.frame(Model=c("Random Intercept","Random Walk","Random Slope","AR(1) Process"),'Observation RMSE'=c(overall_rmse_mean,overall_rmse_walk,overall_rmse_slope,overall_rmse_AR1),'Target Field RMSE'=c(t_field_rmse_mean,t_field_rmse_walk,t_field_rmse_slope,t_field_rmse_AR1),'Non-Target Field RMSE'=c(nt_field_rmse_mean,nt_field_rmse_walk,nt_field_rmse_slope,nt_field_rmse_AR1), AIC=c(aic_mean,aic_walk,aic_slope,aic_AR1),BIC=c(bic_mean,bic_walk,bic_slope,bic_AR1))
+
+#Walk is still the best model here
+
+save(valid_frame_full,file="validation_table_full.RData")
+
+```
+
+```{r fixed-only}
+
+#For full dataset:
+load("rand_walk_output_fixed.RData")
+load("rand_mean_output_fixed.RData")
+load("rand_slope_output_fixed.RData")
+load("rand_AR1_output_fixed.RData")
+
+#All converged, so previous false convergence for slope must have been a mistake
+
+#Observation RMSE
+check_frame_walk<-(obj_walk$env$data$A/rowSums(obj_walk$env$data$A))-Report_walk$q
+check_frame_mean<-(obj_mean$env$data$A/rowSums(obj_mean$env$data$A))-Report_mean$q
+check_frame_slope<-(obj_slope$env$data$A/rowSums(obj_slope$env$data$A))-Report_slope$q
+check_frame_AR1<-(obj_AR1$env$data$A/rowSums(obj_AR1$env$data$A))-Report_AR1$q
+
+
+# check_frame2_walk<-(obj_walk$env$data$H/rowSums(obj_walk$env$data$H))-Report_walk$p
+# check_frame2_mean<-(obj_mean$env$data$H/rowSums(obj_mean$env$data$H))-Report_mean$p
+# check_frame2_slope<-(obj_slope$env$data$H/rowSums(obj_slope$env$data$H))-Report_slope$p
+# check_frame2_AR1<-(obj_AR1$env$data$H/rowSums(obj_AR1$env$data$H))-Report_AR1$p
+
+overall_rmse_walk<-sqrt(mean(check_frame_walk^2))
+overall_rmse_mean<-sqrt(mean(check_frame_mean^2))
+overall_rmse_slope<-sqrt(mean(check_frame_slope^2))
+overall_rmse_AR1<-sqrt(mean(check_frame_AR1^2))
+
+target_rmse_walk<-sqrt(mean(check_frame_walk[,1]^2))
+target_rmse_mean<-sqrt(mean(check_frame_mean[,1]^2))
+target_rmse_slope<-sqrt(mean(check_frame_slope[,1]^2))
+target_rmse_AR1<-sqrt(mean(check_frame_AR1[,1]^2))
+
+nontarget_rmse_walk<-sqrt(mean(check_frame_walk[,2]^2))
+nontarget_rmse_mean<-sqrt(mean(check_frame_mean[,2]^2))
+nontarget_rmse_slope<-sqrt(mean(check_frame_slope[,2]^2))
+nontarget_rmse_AR1<-sqrt(mean(check_frame_AR1[,2]^2))
+
+bhook_rmse_walk<-sqrt(mean(check_frame_walk[,3]^2))
+bhook_rmse_mean<-sqrt(mean(check_frame_mean[,3]^2))
+bhook_rmse_slope<-sqrt(mean(check_frame_slope[,3]^2))
+bhook_rmse_AR1<-sqrt(mean(check_frame_AR1[,3]^2))
+
+#AIC
+calc_aic<-function(k,ll){return(2*k-2*ll)}
+
+aic_walk<-calc_aic(length(obj_walk$par),-sum(Report_walk$nll_joint))
+aic_mean<-calc_aic(length(obj_mean$par),-sum(Report_mean$nll_joint))
+aic_slope<-calc_aic(length(obj_slope$par),-sum(Report_slope$nll_joint))
+aic_AR1<-calc_aic(length(obj_AR1$par),-sum(Report_AR1$nll_joint))
+
+calc_bic<-function(k,n,ll){return(k*log(n)-2*ll)}
+
+bic_walk<-calc_bic(length(obj_walk$par),sum(obj_walk$env$data$n),-sum(Report_walk$nll_joint))
+bic_mean<-calc_bic(length(obj_mean$par),sum(obj_mean$env$data$n),-sum(Report_mean$nll_joint))
+bic_slope<-calc_bic(length(obj_slope$par),sum(obj_slope$env$data$n),-sum(Report_slope$nll_joint))
+bic_AR1<-calc_bic(length(obj_AR1$par),sum(obj_AR1$env$data$n),-sum(Report_AR1$nll_joint))
+
+t_field_rmse_walk<-sqrt(mean((Report_walk$omegat)^2))
+nt_field_rmse_walk<-sqrt(mean((Report_walk$omegant)^2))
+t_field_rmse_mean<-sqrt(mean((Report_mean$omegat)^2))
+nt_field_rmse_mean<-sqrt(mean((Report_mean$omegant)^2))
+t_field_rmse_slope<-sqrt(mean((Report_slope$omegat)^2))
+nt_field_rmse_slope<-sqrt(mean((Report_slope$omegant)^2))
+t_field_rmse_AR1<-sqrt(mean((Report_AR1$omegat)^2))
+nt_field_rmse_AR1<-sqrt(mean((Report_AR1$omegant)^2))
+
+valid_frame_fixed<-data.frame(Model=c("Random Intercept","Random Walk","Random Slope","AR(1) Process"),'Observation RMSE'=c(overall_rmse_mean,overall_rmse_walk,overall_rmse_slope,overall_rmse_AR1),'Target Field RMSE'=c(t_field_rmse_mean,t_field_rmse_walk,t_field_rmse_slope,t_field_rmse_AR1),'Non-Target Field RMSE'=c(nt_field_rmse_mean,nt_field_rmse_walk,nt_field_rmse_slope,nt_field_rmse_AR1), AIC=c(aic_mean,aic_walk,aic_slope,aic_AR1),BIC=c(bic_mean,bic_walk,bic_slope,bic_AR1))
+
+#Walk is still the best model here
+
+save(valid_frame_fixed,file="validation_table_fixed.RData")
+```
+
+```{r both-2017}
+#For full dataset:
+load("rand_walk_output_2017.RData")
+load("rand_mean_output_2017.RData")
+load("rand_slope_output_2017.RData")
+load("rand_AR1_output_2017.RData")
+
+#All converged, so previous false convergence for slope must have been a mistake
+
+#Observation RMSE
+check_frame_walk<-(obj_walk$env$data$A/rowSums(obj_walk$env$data$A))-Report_walk$q
+check_frame_mean<-(obj_mean$env$data$A/rowSums(obj_mean$env$data$A))-Report_mean$q
+check_frame_slope<-(obj_slope$env$data$A/rowSums(obj_slope$env$data$A))-Report_slope$q
+check_frame_AR1<-(obj_AR1$env$data$A/rowSums(obj_AR1$env$data$A))-Report_AR1$q
+
+
+check_frame2_walk<-(obj_walk$env$data$H/rowSums(obj_walk$env$data$H))-Report_walk$p
+check_frame2_mean<-(obj_mean$env$data$H/rowSums(obj_mean$env$data$H))-Report_mean$p
+check_frame2_slope<-(obj_slope$env$data$H/rowSums(obj_slope$env$data$H))-Report_slope$p
+check_frame2_AR1<-(obj_AR1$env$data$H/rowSums(obj_AR1$env$data$H))-Report_AR1$p
+
+overall_rmse_walk<-sqrt(mean(check_frame_walk^2))+sqrt(mean(check_frame2_walk^2))
+overall_rmse_mean<-sqrt(mean(check_frame_mean^2))+sqrt(mean(check_frame2_mean^2))
+overall_rmse_slope<-sqrt(mean(check_frame_slope^2))+sqrt(mean(check_frame2_slope^2))
+overall_rmse_AR1<-sqrt(mean(check_frame_AR1^2))+sqrt(mean(check_frame2_AR1^2))
+
+target_rmse_walk<-sqrt(mean(check_frame_walk[,1]^2))+sqrt(mean(check_frame2_walk[,2]^2))
+target_rmse_mean<-sqrt(mean(check_frame_mean[,1]^2))+sqrt(mean(check_frame2_mean[,2]^2))
+target_rmse_slope<-sqrt(mean(check_frame_slope[,1]^2))+sqrt(mean(check_frame2_slope[,2]^2))
+target_rmse_AR1<-sqrt(mean(check_frame_AR1[,1]^2))+sqrt(mean(check_frame2_AR1[,2]^2))
+
+nontarget_rmse_walk<-sqrt(mean(check_frame_walk[,2]^2))+sqrt(mean(check_frame2_walk[,3]^2))
+nontarget_rmse_mean<-sqrt(mean(check_frame_mean[,2]^2))+sqrt(mean(check_frame2_mean[,3]^2))
+nontarget_rmse_slope<-sqrt(mean(check_frame_slope[,2]^2))+sqrt(mean(check_frame2_slope[,3]^2))
+nontarget_rmse_AR1<-sqrt(mean(check_frame_AR1[,2]^2))+sqrt(mean(check_frame2_AR1[,3]^2))
+
+bhook_rmse_walk<-sqrt(mean(check_frame_walk[,3]^2))+sqrt(mean(check_frame2_walk[,4]^2))
+bhook_rmse_mean<-sqrt(mean(check_frame_mean[,3]^2))+sqrt(mean(check_frame2_mean[,4]^2))
+bhook_rmse_slope<-sqrt(mean(check_frame_slope[,3]^2))+sqrt(mean(check_frame2_slope[,4]^2))
+bhook_rmse_AR1<-sqrt(mean(check_frame_AR1[,3]^2))+sqrt(mean(check_frame2_AR1[,4]^2))
+
+#AIC
+calc_aic<-function(k,ll){return(2*k-2*ll)}
+
+aic_walk<-calc_aic(length(obj_walk$par),-sum(Report_walk$nll_joint))
+aic_mean<-calc_aic(length(obj_mean$par),-sum(Report_mean$nll_joint))
+aic_slope<-calc_aic(length(obj_slope$par),-sum(Report_slope$nll_joint))
+aic_AR1<-calc_aic(length(obj_AR1$par),-sum(Report_AR1$nll_joint))
+
+calc_bic<-function(k,n,ll){return(k*log(n)-2*ll)}
+
+bic_walk<-calc_bic(length(obj_walk$par),sum(obj_walk$env$data$n),-sum(Report_walk$nll_joint))
+bic_mean<-calc_bic(length(obj_mean$par),sum(obj_mean$env$data$n),-sum(Report_mean$nll_joint))
+bic_slope<-calc_bic(length(obj_slope$par),sum(obj_slope$env$data$n),-sum(Report_slope$nll_joint))
+bic_AR1<-calc_bic(length(obj_AR1$par),sum(obj_AR1$env$data$n),-sum(Report_AR1$nll_joint))
+
+t_field_rmse_walk<-sqrt(mean((Report_walk$omegat)^2))
+nt_field_rmse_walk<-sqrt(mean((Report_walk$omegant)^2))
+t_field_rmse_mean<-sqrt(mean((Report_mean$omegat)^2))
+nt_field_rmse_mean<-sqrt(mean((Report_mean$omegant)^2))
+t_field_rmse_slope<-sqrt(mean((Report_slope$omegat)^2))
+nt_field_rmse_slope<-sqrt(mean((Report_slope$omegant)^2))
+t_field_rmse_AR1<-sqrt(mean((Report_AR1$omegat)^2))
+nt_field_rmse_AR1<-sqrt(mean((Report_AR1$omegant)^2))
+
+valid_frame_full_2017<-data.frame(Model=c("Random Intercept","Random Walk","Random Slope","AR(1) Process"),'Observation RMSE'=c(overall_rmse_mean,overall_rmse_walk,overall_rmse_slope,overall_rmse_AR1),'Target Field RMSE'=c(t_field_rmse_mean,t_field_rmse_walk,t_field_rmse_slope,t_field_rmse_AR1),'Non-Target Field RMSE'=c(nt_field_rmse_mean,nt_field_rmse_walk,nt_field_rmse_slope,nt_field_rmse_AR1), AIC=c(aic_mean,aic_walk,aic_slope,aic_AR1),BIC=c(bic_mean,bic_walk,bic_slope,bic_AR1))
+
+save(valid_frame_full_2017,file="validation_table_full_2017.RData")
+
+#First time best choice is technically mean or slope, BUT both of these do not have positive definite hessians and both rand variances are arbitrarily close to 0, so I don't know that I would choose them in this case because they can't even estimate one of their standard errors 
+#I would still go for the random walk here specifically because the Hessian is not positive definite (basically tells me)
+
+```
+
+```{r strat-2017]}
+#For full dataset:
+load("rand_walk_output_strat_2017.RData")
+load("rand_mean_output_strat_2017.RData")
+load("rand_slope_output_strat_2017.RData")
+load("rand_AR1_output_strat_2017.RData")
+
+#All converged, so previous false convergence for slope must have been a mistake
+
+#Observation RMSE
+check_frame_walk<-(obj_walk$env$data$A/rowSums(obj_walk$env$data$A))-Report_walk$q
+check_frame_mean<-(obj_mean$env$data$A/rowSums(obj_mean$env$data$A))-Report_mean$q
+check_frame_slope<-(obj_slope$env$data$A/rowSums(obj_slope$env$data$A))-Report_slope$q
+check_frame_AR1<-(obj_AR1$env$data$A/rowSums(obj_AR1$env$data$A))-Report_AR1$q
+
+
+check_frame2_walk<-(obj_walk$env$data$H/rowSums(obj_walk$env$data$H))-Report_walk$p
+check_frame2_mean<-(obj_mean$env$data$H/rowSums(obj_mean$env$data$H))-Report_mean$p
+check_frame2_slope<-(obj_slope$env$data$H/rowSums(obj_slope$env$data$H))-Report_slope$p
+check_frame2_AR1<-(obj_AR1$env$data$H/rowSums(obj_AR1$env$data$H))-Report_AR1$p
+
+overall_rmse_walk<-sqrt(mean(check_frame_walk^2))+sqrt(mean(check_frame2_walk^2))
+overall_rmse_mean<-sqrt(mean(check_frame_mean^2))+sqrt(mean(check_frame2_mean^2))
+overall_rmse_slope<-sqrt(mean(check_frame_slope^2))+sqrt(mean(check_frame2_slope^2))
+overall_rmse_AR1<-sqrt(mean(check_frame_AR1^2))+sqrt(mean(check_frame2_AR1^2))
+
+target_rmse_walk<-sqrt(mean(check_frame_walk[,1]^2))+sqrt(mean(check_frame2_walk[,2]^2))
+target_rmse_mean<-sqrt(mean(check_frame_mean[,1]^2))+sqrt(mean(check_frame2_mean[,2]^2))
+target_rmse_slope<-sqrt(mean(check_frame_slope[,1]^2))+sqrt(mean(check_frame2_slope[,2]^2))
+target_rmse_AR1<-sqrt(mean(check_frame_AR1[,1]^2))+sqrt(mean(check_frame2_AR1[,2]^2))
+
+nontarget_rmse_walk<-sqrt(mean(check_frame_walk[,2]^2))+sqrt(mean(check_frame2_walk[,3]^2))
+nontarget_rmse_mean<-sqrt(mean(check_frame_mean[,2]^2))+sqrt(mean(check_frame2_mean[,3]^2))
+nontarget_rmse_slope<-sqrt(mean(check_frame_slope[,2]^2))+sqrt(mean(check_frame2_slope[,3]^2))
+nontarget_rmse_AR1<-sqrt(mean(check_frame_AR1[,2]^2))+sqrt(mean(check_frame2_AR1[,3]^2))
+
+bhook_rmse_walk<-sqrt(mean(check_frame_walk[,3]^2))+sqrt(mean(check_frame2_walk[,4]^2))
+bhook_rmse_mean<-sqrt(mean(check_frame_mean[,3]^2))+sqrt(mean(check_frame2_mean[,4]^2))
+bhook_rmse_slope<-sqrt(mean(check_frame_slope[,3]^2))+sqrt(mean(check_frame2_slope[,4]^2))
+bhook_rmse_AR1<-sqrt(mean(check_frame_AR1[,3]^2))+sqrt(mean(check_frame2_AR1[,4]^2))
+
+#AIC
+calc_aic<-function(k,ll){return(2*k-2*ll)}
+
+aic_walk<-calc_aic(length(obj_walk$par),-sum(Report_walk$nll_joint))
+aic_mean<-calc_aic(length(obj_mean$par),-sum(Report_mean$nll_joint))
+aic_slope<-calc_aic(length(obj_slope$par),-sum(Report_slope$nll_joint))
+aic_AR1<-calc_aic(length(obj_AR1$par),-sum(Report_AR1$nll_joint))
+
+calc_bic<-function(k,n,ll){return(k*log(n)-2*ll)}
+
+bic_walk<-calc_bic(length(obj_walk$par),sum(obj_walk$env$data$n),-sum(Report_walk$nll_joint))
+bic_mean<-calc_bic(length(obj_mean$par),sum(obj_mean$env$data$n),-sum(Report_mean$nll_joint))
+bic_slope<-calc_bic(length(obj_slope$par),sum(obj_slope$env$data$n),-sum(Report_slope$nll_joint))
+bic_AR1<-calc_bic(length(obj_AR1$par),sum(obj_AR1$env$data$n),-sum(Report_AR1$nll_joint))
+
+t_field_rmse_walk<-sqrt(mean((Report_walk$omegat)^2))
+nt_field_rmse_walk<-sqrt(mean((Report_walk$omegant)^2))
+t_field_rmse_mean<-sqrt(mean((Report_mean$omegat)^2))
+nt_field_rmse_mean<-sqrt(mean((Report_mean$omegant)^2))
+t_field_rmse_slope<-sqrt(mean((Report_slope$omegat)^2))
+nt_field_rmse_slope<-sqrt(mean((Report_slope$omegant)^2))
+t_field_rmse_AR1<-sqrt(mean((Report_AR1$omegat)^2))
+nt_field_rmse_AR1<-sqrt(mean((Report_AR1$omegant)^2))
+
+valid_frame_strat_2017<-data.frame(Model=c("Random Intercept","Random Walk","Random Slope","AR(1) Process"),'Observation RMSE'=c(overall_rmse_mean,overall_rmse_walk,overall_rmse_slope,overall_rmse_AR1),'Target Field RMSE'=c(t_field_rmse_mean,t_field_rmse_walk,t_field_rmse_slope,t_field_rmse_AR1),'Non-Target Field RMSE'=c(nt_field_rmse_mean,nt_field_rmse_walk,nt_field_rmse_slope,nt_field_rmse_AR1), AIC=c(aic_mean,aic_walk,aic_slope,aic_AR1),BIC=c(bic_mean,bic_walk,bic_slope,bic_AR1))
+
+#Walk is still the best model here
+
+save(valid_frame_strat_2017,file="validation_table_strat_2017.RData")
+```
+
+```{r fixed-2017}
+
+#For full dataset:
+load("rand_walk_output_fixed_2017.RData")
+load("rand_mean_output_fixed_2017.RData")
+load("rand_slope_output_fixed_2017.RData")
+load("rand_AR1_output_fixed_2017.RData")
+
+#All converged, so previous false convergence for slope must have been a mistake
+
+#Observation RMSE
+check_frame_walk<-(obj_walk$env$data$A/rowSums(obj_walk$env$data$A))-Report_walk$q
+check_frame_mean<-(obj_mean$env$data$A/rowSums(obj_mean$env$data$A))-Report_mean$q
+check_frame_slope<-(obj_slope$env$data$A/rowSums(obj_slope$env$data$A))-Report_slope$q
+check_frame_AR1<-(obj_AR1$env$data$A/rowSums(obj_AR1$env$data$A))-Report_AR1$q
+
+
+# check_frame2_walk<-(obj_walk$env$data$H/rowSums(obj_walk$env$data$H))-Report_walk$p
+# check_frame2_mean<-(obj_mean$env$data$H/rowSums(obj_mean$env$data$H))-Report_mean$p
+# check_frame2_slope<-(obj_slope$env$data$H/rowSums(obj_slope$env$data$H))-Report_slope$p
+# check_frame2_AR1<-(obj_AR1$env$data$H/rowSums(obj_AR1$env$data$H))-Report_AR1$p
+
+overall_rmse_walk<-sqrt(mean(check_frame_walk^2))
+overall_rmse_mean<-sqrt(mean(check_frame_mean^2))
+overall_rmse_slope<-sqrt(mean(check_frame_slope^2))
+overall_rmse_AR1<-sqrt(mean(check_frame_AR1^2))
+
+target_rmse_walk<-sqrt(mean(check_frame_walk[,1]^2))
+target_rmse_mean<-sqrt(mean(check_frame_mean[,1]^2))
+target_rmse_slope<-sqrt(mean(check_frame_slope[,1]^2))
+target_rmse_AR1<-sqrt(mean(check_frame_AR1[,1]^2))
+
+nontarget_rmse_walk<-sqrt(mean(check_frame_walk[,2]^2))
+nontarget_rmse_mean<-sqrt(mean(check_frame_mean[,2]^2))
+nontarget_rmse_slope<-sqrt(mean(check_frame_slope[,2]^2))
+nontarget_rmse_AR1<-sqrt(mean(check_frame_AR1[,2]^2))
+
+bhook_rmse_walk<-sqrt(mean(check_frame_walk[,3]^2))
+bhook_rmse_mean<-sqrt(mean(check_frame_mean[,3]^2))
+bhook_rmse_slope<-sqrt(mean(check_frame_slope[,3]^2))
+bhook_rmse_AR1<-sqrt(mean(check_frame_AR1[,3]^2))
+
+#AIC
+calc_aic<-function(k,ll){return(2*k-2*ll)}
+
+aic_walk<-calc_aic(length(obj_walk$par),-sum(Report_walk$nll_joint))
+aic_mean<-calc_aic(length(obj_mean$par),-sum(Report_mean$nll_joint))
+aic_slope<-calc_aic(length(obj_slope$par),-sum(Report_slope$nll_joint))
+aic_AR1<-calc_aic(length(obj_AR1$par),-sum(Report_AR1$nll_joint))
+
+calc_bic<-function(k,n,ll){return(k*log(n)-2*ll)}
+
+bic_walk<-calc_bic(length(obj_walk$par),sum(obj_walk$env$data$n),-sum(Report_walk$nll_joint))
+bic_mean<-calc_bic(length(obj_mean$par),sum(obj_mean$env$data$n),-sum(Report_mean$nll_joint))
+bic_slope<-calc_bic(length(obj_slope$par),sum(obj_slope$env$data$n),-sum(Report_slope$nll_joint))
+bic_AR1<-calc_bic(length(obj_AR1$par),sum(obj_AR1$env$data$n),-sum(Report_AR1$nll_joint))
+
+t_field_rmse_walk<-sqrt(mean((Report_walk$omegat)^2))
+nt_field_rmse_walk<-sqrt(mean((Report_walk$omegant)^2))
+t_field_rmse_mean<-sqrt(mean((Report_mean$omegat)^2))
+nt_field_rmse_mean<-sqrt(mean((Report_mean$omegant)^2))
+t_field_rmse_slope<-sqrt(mean((Report_slope$omegat)^2))
+nt_field_rmse_slope<-sqrt(mean((Report_slope$omegant)^2))
+t_field_rmse_AR1<-sqrt(mean((Report_AR1$omegat)^2))
+nt_field_rmse_AR1<-sqrt(mean((Report_AR1$omegant)^2))
+
+valid_frame_fixed_2017<-data.frame(Model=c("Random Intercept","Random Walk","Random Slope","AR(1) Process"),'Observation RMSE'=c(overall_rmse_mean,overall_rmse_walk,overall_rmse_slope,overall_rmse_AR1),'Target Field RMSE'=c(t_field_rmse_mean,t_field_rmse_walk,t_field_rmse_slope,t_field_rmse_AR1),'Non-Target Field RMSE'=c(nt_field_rmse_mean,nt_field_rmse_walk,nt_field_rmse_slope,nt_field_rmse_AR1), AIC=c(aic_mean,aic_walk,aic_slope,aic_AR1),BIC=c(bic_mean,bic_walk,bic_slope,bic_AR1))
+
+#Walk is still the best model here
+
+save(valid_frame_fixed_2017,file="validation_table_fixed_2017.RData")
+```
+

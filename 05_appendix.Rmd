@@ -143,12 +143,70 @@ Trzcinski, M, Armsworthy, S, Wilson, S, Mohn, R, Fowler, M and Campana, S. 2009.
 
 # {#app:second-appendix}
 
+```{r prop-fix,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Histogram of proportion of each category in each set for fixed stations data."}
+knitr::include_graphics("prop_fix.png")
+```
+
+```{r prop-strat,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Histogram of proportion of each category in each set for stratified dataset."}
+knitr::include_graphics("prop_strat.png")
+```
+
+```{r num-fix,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Histogram of numbers of each category in each set for fixed stations data."}
+knitr::include_graphics("num_fix.png")
+```
+
+```{r num-strat,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Histogram of numbers of each category in each set for stratified dataset."}
+knitr::include_graphics("num_strat.png")
+```
+
 ```{r target-spat-fixed,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Station-specific estimated target species catch rates obtained using data from only the fixed stations."}
 knitr::include_graphics("1phi_no_cons_mean_all_ldat.png")
 ```
 
 ```{r non-target-spat-fixed,echo=F,fig.ncol=1,out.width="100%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Station-specific estimated non-target species catch rates obtained using data from only the fixed stations."}
 knitr::include_graphics("1phi_no_cons_mean_all_ldant.png")
+```
+
+```{r new-target-indices,echo=F,fig.ncol=2,out.width="75%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Estimated overall index for target and non-target species (expected number of halibut caught per hook per minute) by the random walk model where only non-target species can escape and the same model where target species and non-target species have an identical probability of escape using data from the fixed stations and stratified survey design together between 2000 and 2021 and between 2017 and 2021. The uncertainty represent +/- 1 standard error."}
+knitr::include_graphics(c("comp_all_ldat_comp_equal.png","comp_all_ldant_comp_equal.png"))
+```
+
+```{r persist-app,echo=F,fig.ncol=2,out.width="60%",fig.align="center",dpi=200,fig.show="hold",fig.cap = "Persistence index between years for target species catch rates."}
+knitr::include_graphics("persist_raster_plot_walk.png")
+```
+
+\clearpage
+
+# {#app:third-appendix}
+
+```{r valid-app, echo=F}
+load("validation_table_full_2017.RData")
+colnames(valid_frame_full_2017)<-c("Model","Observation RMSE","Target Field RMSE", "Non-Target Field RMSE", "AIC", "BIC")
+csasdown::csas_table(valid_frame_full_2017,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model selection approaches when fiting random walk model to both datasets from 2017 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
+```
+
+```{r valid-app2, echo=F}
+load("validation_table_fixed.RData")
+colnames(valid_frame_fixed)<-c("Model","Observation RMSE","Target Field RMSE", "Non-Target Field RMSE", "AIC", "BIC")
+csasdown::csas_table(valid_frame_fixed,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model selection approaches when fiting random walk model to the fixed stations dataset from 2000 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
+```
+
+```{r valid-app3, echo=F}
+load("validation_table_fixed_2017.RData")
+colnames(valid_frame_fixed_2017)<-c("Model","Observation RMSE","Target Field RMSE", "Non-Target Field RMSE", "AIC", "BIC")
+csasdown::csas_table(valid_frame_fixed_2017,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model selection approaches when fiting random walk model to the fixed stations dataset from 2017 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
+```
+
+```{r valid-app4, echo=F}
+load("validation_table_strat_2017.RData")
+colnames(valid_frame_strat_2017)<-c("Model","Observation RMSE","Target Field RMSE", "Non-Target Field RMSE", "AIC", "BIC")
+csasdown::csas_table(valid_frame_strat_2017,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model selection approaches when fiting random walk model to the stratified stations dataset from 2017 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
+```
+
+```{r cv-frame-fold,echo=F}
+load("cv_rmse_frames.RData")
+colnames(fold_rmses_frame)<-c("CV Fold","Overall RMSE","Target RMSE","Other RMSE")
+csasdown::csas_table(fold_rmses_frame,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "RMSE obtained from 10-fold cross-validation output for each fold using the random walk model to both datasets from 2000 to 2021",font_size=9)
 ```
 
 <!-- At the end of your appendices add: -->

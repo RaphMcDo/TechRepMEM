@@ -85,10 +85,10 @@ Bedford Institute of Oceanography\\
 Dartmouth, NS, B2Y 4A2}
 
 % Abstract
-\newcommand{\trAbstract}{The Industry-DFO Atlantic halibut (\emph{Hippoglossus hippoglossus}) longline survey has been running since 1998 (using a fixed stations design) with the aim of providing a reliable index of halibut abundance. A review of modelling approaches recommended the use of a multinomial exponential model (MEM) to account for hook competition and the abundance of non-target species and further prompted the modification of the sampling design. A new stratified random sruvey was initiated in 2017. Since then, this new survey was run in parallel with the fixed station survey, with a reduced number of fixed stations. The new stratified random survey has more standardized fishing protocol and additional hook condition data are collected to inform the MEM. The aim of this report is to present a new spatio-temporal version of MEM. This new formulation is able to successfully model data from the fixed stations and the stratified random sampling design separately and together, allowing the inclusion of almost all available data into a unified framework. It is also modified to incorporate additional fixed and random effects, focusing on the inclusion of random effects to account for the impact of different fishing vessels. The analysis further illuminates potential issues capturing changes in halibut and non-target distributions and abundance over time with the fixed stations design and shows that the switch to a stratified random sampling design was very timely and helped better capture the increase in halibut catch rates observed in 2017.}
+\newcommand{\trAbstract}{The Industry-DFO Atlantic halibut (\emph{Hippoglossus hippoglossus}) longline survey has been running since 1998 (using a fixed stations design) with the aim of providing a reliable index of halibut abundance. A 2016 review of modelling approaches recommended the use of a multinomial exponential model (MEM) to account for hook competition and the abundance of non-target species and further prompted the modification of the sampling design. Consequently, a new stratified random survey was initiated in 2017. Since then, this new stratified survey was run in parallel with the fixed station survey, but with a reduced number of fixed stations. The new survey has more standardized fishing protocols and additional hook condition data are collected to inform the MEM. The aim of this report is to present a new spatio-temporal version of MEM that is able to successfully model data from both the fixed stations and the stratified random sampling design within a unified framework. It also incorporates additional fixed and random effects, where the random effects account for the among-group variability associated with fishing vessels. The analysis further demonstrates the potential bias in abundance estimates associated with modelling changes in halibut and non-target distributions and abundance over time that would occur using the fixed stations design. It furthers shows that the switch to a stratified random sampling design was very timely and helped better quantify the increase in halibut catch rates observed since 2017.}
 
 % Resume (i.e., French abstract)
-\newcommand{\trResume}{Le relevé à la palangre de l'industrie et du MPO pour le flétan atlantique (\emph{Hippoglossus hippoglossus}) est en cours depuis 1998 utilisant des stations fixes de collection de données et ayant comme objectif d'obtenir de l'information plus approprié sur l'abondance du flétan. Un examen des modèles utilisés sur ces données a recommandé l'utilisation d'un modèle multinomiale exponentiel (MME) capable de prendre en compte la compétition pour les crochets de pêche et l'abondance des espèces cibles et non cibles. De plus, cet examen a incité la modification du protocole de collection de données avec l'implémentation d'un plan d'échantillonage aléatoire stratifié en 2017 concurrent avec le plan d'échantillonage de stations fixes dont le nombre de stations a été réduit. Ce nouveau protocol d'échantillonage a des protocoles de pêche plus standardizé et recueille plus d'information sur la condition des crochets pour informer le MME. L'objectif principal de ce rapport est la présentation d'une nouvelle version spatio-temporelle du MME. Cette nouvelle version est capable de modèler les données provenant des stations fixes et de l'échantillonage aléatoire stratifié séparemment et ensemble, ce qui permet l'inclusion de la majorité de l'information disponible à l'intérieur du même modèle. L'analyse souligne des problèmes potentiels provenant du relevé d'échantillonage utilisant des stations fixes et démontre que l'implémentation du relevé d'échantillonage aléatoire stratifié fut opportun car il a permis au modèle de mieux capturer l'augmentation des taux de captures de flétan en 2017.}
+\newcommand{\trResume}{MUST REDO THIS SINCE MODIFIED ENGLISH ONELe relevé à la palangre de l'industrie et du MPO pour le flétan atlantique (\emph{Hippoglossus hippoglossus}) est en cours depuis 1998 utilisant des stations fixes de collection de données et ayant comme objectif d'obtenir de l'information plus approprié sur l'abondance du flétan. Un examen des modèles utilisés sur ces données a recommandé l'utilisation d'un modèle multinomiale exponentiel (MME) capable de prendre en compte la compétition pour les crochets de pêche et l'abondance des espèces cibles et non cibles. De plus, cet examen a incité la modification du protocole de collection de données avec l'implémentation d'un plan d'échantillonage aléatoire stratifié en 2017 concurrent avec le plan d'échantillonage de stations fixes dont le nombre de stations a été réduit. Ce nouveau protocol d'échantillonage a des protocoles de pêche plus standardizé et recueille plus d'information sur la condition des crochets pour informer le MME. L'objectif principal de ce rapport est la présentation d'une nouvelle version spatio-temporelle du MME. Cette nouvelle version est capable de modèler les données provenant des stations fixes et de l'échantillonage aléatoire stratifié séparemment et ensemble, ce qui permet l'inclusion de la majorité de l'information disponible à l'intérieur du même modèle. L'analyse souligne des problèmes potentiels provenant du relevé d'échantillonage utilisant des stations fixes et démontre que l'implémentation du relevé d'échantillonage aléatoire stratifié fut opportun car il a permis au modèle de mieux capturer l'augmentation des taux de captures de flétan en 2017.}
 
 \newcommand{\trISBN}{}
 
@@ -170,11 +170,11 @@ Dartmouth, NS, B2Y 4A2}
 \hypertarget{sec:introduction}{%
 \section{Introduction}\label{sec:introduction}}
 
-Survey data for the Atlantic halibut (\emph{Hippoglossus hippoglossus}) population in the North-Western Atlantic in Canadian waters were originally obtained as part of the Fisheries and Ocean's (DFO) summer Research Vessel (RV) bottom trawl (den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}). This survey provides indices of abundance, indices of biomass, and biological samples for groundfish and other components of the ecosystem. Some commercially valuable fish and invertebrate stocks are not well sampled by trawl gear, such as halibut (Zwanenburg et al. \protect\hyperlink{ref-Zwanenburg2003}{2003}), and alternate methods to monitor abundance are used. In the case of halibut, the Industry-DFO Halibut longline survey was initiated in 1998 using longline gear to provide indices of abundance. A fixed stations design was adopted and fishing was completed by commercial fishermen, with at-sea obervers reconding data on the catch by weight of target species (Atlantic halibut) and non-target species (anything else) (Zwanenburg and Wilson \protect\hyperlink{ref-Zwanenburg2000}{2000}; Trzcinski et al. \protect\hyperlink{ref-Trzcinski2009}{2009}; den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}). The aim of this new survey was to obtain information on size composition, diet, tagging/movement and bycatch species for stock assessment purposes (Zwanenburg and Wilson \protect\hyperlink{ref-Zwanenburg2000}{2000}). The analysis consisted of obtaining a stratified mean catch per hook until 2009, wherein this stratified approach was replaced by a generalized linear model to obtain standardized survey catch rates of halibut weight (Trzcinski et al. \protect\hyperlink{ref-Trzcinski2009}{2009}; Smith \protect\hyperlink{ref-Smith2016a}{2016}).
+Survey data for the Atlantic halibut (\emph{Hippoglossus hippoglossus}) population in the North-Western Atlantic in Canadian waters were originally obtained as part of the Fisheries and Ocean's (DFO) summer Research Vessel (RV) bottom trawl survey (den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}). This survey provides indices of abundance, indices of biomass, and biological samples for groundfish and other components of the ecosystem. Some commercially valuable fish and invertebrate stocks are not well sampled by trawl gear, such as halibut (Zwanenburg et al. \protect\hyperlink{ref-Zwanenburg2003}{2003}), and alternate methods to monitor abundance are used. In the case of halibut, the Industry-DFO Halibut longline survey was initiated in 1998 using longline gear to provide indices of abundance. A fixed stations design was adopted and fishing was completed by commercial fishermen, with at-sea observers recording data on the catch by weight of target species (Atlantic halibut) and non-target species (anything else) (Zwanenburg and Wilson \protect\hyperlink{ref-Zwanenburg2000}{2000}; Trzcinski et al. \protect\hyperlink{ref-Trzcinski2009}{2009}; den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}). The aim of this new survey was to obtain information on size composition, diet, movement and bycatch species for stock assessment purposes (Zwanenburg and Wilson \protect\hyperlink{ref-Zwanenburg2000}{2000}). Initially, theanalysis consisted of obtaining a stratified mean catch per hook until 2009, wherein this was replaced by a generalized linear model to obtain standardized survey catch rates of halibut weight (Trzcinski et al. \protect\hyperlink{ref-Trzcinski2009}{2009}; Smith \protect\hyperlink{ref-Smith2016a}{2016}).
 
-An extensive review of methods to estimate catch per unit effort for longline gear (Smith \protect\hyperlink{ref-Smith2016a}{2016}) concluded that catch per unit effort standardization methods ignored the presence and abundance of non-target species and both intra- and inter-species competition for hooks. A multivariate Multinomial Exponential Model (MEM) originally developed by Rothschild (\protect\hyperlink{ref-Rothschild1967}{1967}) and later reformulated by Etienne et al. (\protect\hyperlink{ref-Etienne2013}{2013}) was recommended. The switch to this model required catch reported in total numbers of target and non-target species caught and additional information, such as the number of baited and unbaited hooks hauled back (Smith \protect\hyperlink{ref-Smith2016a}{2016}). In 2017, a new stratified random survey with new more standardized protocols and strata that encompassed the entire management unit was established (DFO \protect\hyperlink{ref-DFO2021}{2021}). This new survey also required the collection of hook condition data. Since then, a subset of fixed station sets have also been completed to provide the opportunity to calibrate the surveys.
+An extensive review of methods to estimate catch per unit effort for longline gear (Smith \protect\hyperlink{ref-Smith2016a}{2016}) concluded that catch per unit effort standardization methods ignored the presence and abundance of non-target species and both intra- and inter-species competition for hooks. A multivariate Multinomial Exponential Model (MEM) originally developed by Rothschild (\protect\hyperlink{ref-Rothschild1967}{1967}) and later reformulated by Etienne et al. (\protect\hyperlink{ref-Etienne2013}{2013}) was recommended. The switch to this model required catch reported in total numbers of target and non-target species caught and additional information, such as the number of baited and unbaited hooks hauled back (Smith \protect\hyperlink{ref-Smith2016a}{2016}). In 2017, a new stratified random survey with more standardized protocols and strata that encompassed the entire management unit was established (DFO \protect\hyperlink{ref-DFO2021}{2021}). This new survey also required the collection of hook condition data. Since then, a subset of fixed station sets have also been completed to provide the opportunity to calibrate the surveys.
 
-While the MEM showed great promise and could easily be modified to incorporate covariates (Smith \protect\hyperlink{ref-Smith2016a}{2016}), its original formulation could not account for any spatial patterns in catch rates (Luo et al. \protect\hyperlink{ref-Luo2022}{2022}) which are likely to exist due to the scale and environmental complexity of the Atlantic halibut management areas (Shackell et al. \protect\hyperlink{ref-Shackell2021}{2021}). Recent work utilizing geostatistics was able to harness this previously ignored information to obtain new estimates of both station-specific and overall catch rates (Luo et al. \protect\hyperlink{ref-Luo2022}{2022}). However, this work focused exclusively on the data from the stratified random sampling design (2017 onwards), leaving 19 years of data unused. Given the importance of this survey for halibut management, the Atlantic Halibut Council sponsored the extension of this strictly spatial approach to a fully spatio-temporal model that could include data from both surveys to provide an index from 1998 to the present. The Term of Reference for this work (including the agreed-upon deliverables) are provided in Appendix 1. This report aims to present a fully spatio-temporal MEM and a comparative analysis when utilizing data from the Scotian Shelf and the Southern Grand Banks on the eastern coast of Canada. It further aims to assess the ability of only the fixed stations data to capture reliable temporal changes in the abundance of Atlantic halibut.
+While the MEM showed great promise and could easily be modified to incorporate covariates (Smith \protect\hyperlink{ref-Smith2016a}{2016}), its original formulation could not account for any spatial patterns in catch rates (Luo et al. \protect\hyperlink{ref-Luo2022}{2022}) which are likely to exist due to the scale and environmental complexity of the Atlantic halibut management areas (Shackell et al. \protect\hyperlink{ref-Shackell2021}{2021}). Recent work utilizing geostatistics was able to harness this previously ignored information to obtain improved estimates of both station-specific and overall catch rates (Luo et al. \protect\hyperlink{ref-Luo2022}{2022}). However, this work focused exclusively on the data from the stratified random sampling design (2017 onwards), leaving 19 years of data unused. Given the importance of this survey for halibut management, the Atlantic Halibut Council sponsored the extension of this strictly spatial approach to a fully spatio-temporal model that could include data from both surveys to provide an index from 1998 to the present. The Term of Reference for this work (including the agreed-upon deliverables) are provided in Appendix 1. This report aims to present a fully spatio-temporal MEM and a comparative analysis when utilizing data from the Scotian Shelf and the Southern Grand Banks on the eastern coast of Canada. It further aims to assess the ability of only the fixed stations data to account for temporal changes in the abundance of Atlantic halibut.
 
 \hypertarget{methods}{%
 \section{Methods}\label{methods}}
@@ -189,21 +189,21 @@ While the MEM showed great promise and could easily be modified to incorporate c
 
 \caption{NAFO divisions on the Scotian Shelf and the Southern Grand Banks. The 3NOPs4VWX5Zc Atlantic halibut stock survey area is denoted by the coloured area, with five area strata: 4X5YX (blues), 4W (oranges), 4V (purples), 3P (greens), and 3NO (reds), and three depth strata: 30 to 130 m (light colour), 131 to 250 m (medium colour), and 251 to 750 m (dark colour). NAFO subdivisions are labelled, and separated by solid lines. The exclusive economic zones of Canada and France are shown with dashed lines. NAFO subdivision 3Pn is not part of the stock area, but is currently included in the survey.}\label{fig:nafo-strat}
 \end{figure}
-There are 2 Atlantic Halibut management units in Canada. The focus of this work is the Scotian Shelf and Southern Grand Banks management unit which encompasses the North Atlantic Fisheries Organization (NAFO) divisions 3NOPs4VWX5Zc. The other NAFO division 4RST encompasses the Gulf of St.~Lawrence and will not be included in our analysis. The definition of this NAFO division is mostly based on tagging studies that showed Atlantic halibut moving throughout most of the Canadian North Atlantic (DFO \protect\hyperlink{ref-DFO2021}{2021}), which has been supported by recent genetic analysis (Kess et al. \protect\hyperlink{ref-Kess2021}{2021}). Halibut is caught throughout the management unit and on the tail of the Grand Banks outside of Canada's exclusive economic zone (EEZ), mostly along the continental shelf (DFO \protect\hyperlink{ref-DFO2021}{2021}), see Figure~\ref{fig:nafo-strat}.
+There are 2 Atlantic Halibut management units in Canada. The focus of this work is the Scotian Shelf and Southern Grand Banks management unit which encompasses the North Atlantic Fisheries Organization (NAFO) divisions 3NOPs4VWX5Zc. The other NAFO division 4RST encompasses the Gulf of St.~Lawrence and will not be included in this analysis. The definition of these NAFO divisions is mostly based on tagging studies that showed Atlantic halibut moving throughout most of the Canadian North Atlantic (DFO \protect\hyperlink{ref-DFO2021}{2021}), which has been supported by recent genetic analysis (Kess et al. \protect\hyperlink{ref-Kess2021}{2021}). Halibut is caught throughout the management unit and on the tail of the Grand Banks outside of Canada's exclusive economic zone (EEZ), mostly along the continental shelf (DFO \protect\hyperlink{ref-DFO2021}{2021}), see Figure~\ref{fig:nafo-strat}.
 
-Due to the nature of spatial modelling and our desire to scale station-specific indices up to an overal index representing the whole area, the area modelled is bounded by the continental shelf (750 m) as shown in Figure~\ref{fig:nafo-strat}. Since no survey ever extends outside of these edges and we do not wish to extrapolate outside the bounds of the observations, restricting our model to this area was determined to be appropriate.
+Due to the nature of spatial modelling and our desire to scale station-specific indices up to an overall index representing the whole area, the area modelled is bounded by the continental shelf (750 m contour) as shown in Figure~\ref{fig:nafo-strat}. Since no survey ever extends outside of these edges and we do not wish to extrapolate outside the bounds of the observations, restricting our model to this area was determined to be appropriate.
 
 \hypertarget{survey-designs}{%
 \subsection{Survey designs}\label{survey-designs}}
 
-As mentioned previously, there are 2 surveys with different sampling designs that are included in this work: a survey that follows a fixed stations design that goes from 1998 to the present day, and a survey following a stratified random sampling design that started in 2017.
+As mentioned previously, there are 2 surveys with different sampling designs contributing to this analysis: a survey that follows a fixed stations design (1998 to 2021), and a survey following a stratified random sampling design (2017 to 2021).
 
 \hypertarget{fixed-stations-design}{%
 \subsubsection{Fixed Stations Design}\label{fixed-stations-design}}
 
-The formulation of this survey followed a stratified design with fixed stations with the original number of stations set to 222, with 30 reserved for the 3NOPs subdivision (den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}). The strata were defined based on the observed landings by trips between 1993 and 1997 using 3 categories: high catches (\textgreater250 kg), medium catches (50-249 kg) and low catches (\textless49 kg) with the number of planned stations proportionally allocated following a ratio of 5:7:10 for the low, medium, and high strata respectively (Zwanenburg and Wilson \protect\hyperlink{ref-Zwanenburg2000}{2000}; Zwanenburg et al. \protect\hyperlink{ref-Zwanenburg2003}{2003}; den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}; Smith \protect\hyperlink{ref-Smith2016a}{2016}). Station coverage has been inconsistent over time as not all stations have been covered every year with new stations being added in the mid-2000s (den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}). The number of fixed stations decreased to around 100 a year in 2017 and onwards due to the implementation of the new stratified random survey. See Table~\ref{tab:stat-samp} for the number of stations sampled every year.
+Initially, the formulation of this survey followed a stratified design with 222 fixed stations, where 30 were reserved for the 3NOPs subdivision (den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}). The strata were defined based on observed halibut landings by trips between 1993 and 1997 using 3 categories: high catches (\textgreater250 kg), medium catches (50-249 kg) and low catches (\textless49 kg) with the number of planned stations proportionally allocated following a ratio of 5:7:10 for the low, medium, and high strata respectively (Zwanenburg and Wilson \protect\hyperlink{ref-Zwanenburg2000}{2000}; Zwanenburg et al. \protect\hyperlink{ref-Zwanenburg2003}{2003}; den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}; Smith \protect\hyperlink{ref-Smith2016a}{2016}). Station coverage has been inconsistent over time as not all stations have been covered every year and new stations were added in the mid-2000s (den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}). The number of fixed stations decreased to around \textasciitilde100 per year in 2017 due to the implementation of a new stratified random survey. See Table~\ref{tab:stat-samp} for the number of stations sampled every year.
 
-Survey fishing protocol is 1000 hook sets left in the water for 10 hours and using Mustad circle hooks \#14 or greater between 4 am and noon, but there have been variations in both number and size of hooks (size \#16 hooks becoming more common later in the time series) (den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}). The start or end of the longline is supposed to be within 3 nautical miles of the station. Vessel and captain participation has varied over time due to many different factors, with 66 different vessels sampling the fixed stations since 2000. The number of halibut (including sub-legal size fish) and non-target species are counted in each set.
+The survey fishing protocol was to set 1000 hooks (Mustad circle hooks \#14 or greater) per station and soak for 10 hours between 4 am and noon. Variations in both number and size of hooks (size \#16 hooks becoming more common later in the time series) did occur (den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}). The start or end of the longline was supposed to be within 3 nautical miles of the station. Vessel and captain participation varied over time due to many different factors, with 66 different vessels sampling the fixed stations since 2000. The number of halibut (including sub-legal size fish) and non-target species were counted in each set.
 \begin{longtable}[]{@{}cccc@{}}
 \caption{\label{tab:stat-samp}Number of successfully sampled stations by sampling design between 1998 and 2021.}\tabularnewline
 \toprule
@@ -243,9 +243,9 @@ Year & Fixed Stations & Stratified Stations & Total Stations\tabularnewline
 \hypertarget{stratified-random-design}{%
 \subsubsection{Stratified Random Design}\label{stratified-random-design}}
 
-The sampling design for this survey follows a stratified random sampling design, where the strata are the 5 NAFO subdivisions (4X5YZ, 4W, 4V, 3P, 3NO) each with 3 depth strata (30-130 m, 131-250 m, 251-750 m) and includes 3Pn and some area outside of Canada's EEZ, which are not part of the management unit (Cox et al. \protect\hyperlink{ref-Cox2018}{2018}; Luo et al. \protect\hyperlink{ref-Luo2022}{2022}). The depth bounds (30-750 m) were chosen as they contain most of the survey sets, most of the Atlantic halibut habitat, and were based on exploratory analyses of catch rates by depth from the fixed stations (Cox et al. \protect\hyperlink{ref-Cox2018}{2018}). Around 150 survey stations a year are randomly assigned to strata with the number in a given stratum proportional to its size (Cox et al. \protect\hyperlink{ref-Cox2018}{2018}; Luo et al. \protect\hyperlink{ref-Luo2022}{2022}). The fishing protocol is similar to the fixed stations protocol but notably more strictly defined, with each set containing 1000 baited hooks with size \#15 hooks set for between 6 and 12 hours (Luo et al. \protect\hyperlink{ref-Luo2022}{2022}). 40 different vessels have participated in the stratified survey sampling design, with 19 of those also sampling some of the fixed stations at some point (meaning 21 vessels have only participated in this survey design).
+The survey follows a stratified random sampling design, where the strata are the 5 NAFO subdivisions (4X5YZ, 4W, 4V, 3P, 3NO) each with 3 depth strata (30-130 m, 131-250 m, 251-750 m) and includes 3Pn and some areas outside of Canada's EEZ, which were not part of the management unit (Cox et al. \protect\hyperlink{ref-Cox2018}{2018}; Luo et al. \protect\hyperlink{ref-Luo2022}{2022}). The depth bounds (30-750 m) based on exploratory analyses of catch rates by depth from the fixed stations (Cox et al. \protect\hyperlink{ref-Cox2018}{2018}), contained most of the survey sets as well as most of the Atlantic halibut habitat. Approximately 150 survey stations per year were randomly assigned to strata with the number in a given stratum proportional to its size (Cox et al. \protect\hyperlink{ref-Cox2018}{2018}; Luo et al. \protect\hyperlink{ref-Luo2022}{2022}). The fishing protocol was similar to the fixed stations protocol but notably more strictly defined, with each set containing 1000 baited hooks (size \#15 hooks) set for between 6 and 12 hours (Luo et al. \protect\hyperlink{ref-Luo2022}{2022}). 40 different vessels have participated in the stratified survey sampling design, with 19 of those also sampling some of the fixed stations at some point (meaning 21 vessels have only participated in the stratified random survey).
 
-Unlike the fixed stations, the observers collecting the stratified random survey data must also record hook condition data on a subset of hooks for each set. Based on a pilot study that aimed to calculate the size required to be broadly representative of the whole set (Doherty et al. \protect\hyperlink{ref-Doherty2017}{2017}), 10 samples of 30 hooks across the line are chosen for this increased data collection for a total of 300 per 1000 hooks (Luo et al. \protect\hyperlink{ref-Luo2022}{2022}). Instead of simply counting the number of halibut (including sub-legal size fish) and non-target species caught, the condition of each hook (baited, unbaited, broken, missing) is also recorded for this subsample. See Table~\ref{tab:stat-samp} for the number of stations sampled every year.
+Unlike the fixed stations, the observers collecting the stratified random survey data also recorded hook condition data on a subset of hooks for each set. Based on a pilot study that aimed to calculate the quantity of hooks required to be broadly representative of the whole set (Doherty et al. \protect\hyperlink{ref-Doherty2017}{2017}), 10 samples of 30 hooks across the line were chosen for a total of 300 per 1000 hooks (Luo et al. \protect\hyperlink{ref-Luo2022}{2022}). Instead of simply counting the number of halibut (including sub-legal size fish) and non-target species caught, the condition of each hook (baited, unbaited, broken, missing) is also recorded for this subsample. See Table~\ref{tab:stat-samp} for the number of stations sampled every year.
 
 \hypertarget{model-formulation}{%
 \subsection{Model Formulation}\label{model-formulation}}
@@ -274,7 +274,7 @@ This formulation does not account for the condition of hooks that return without
 \hypertarget{memspa}{%
 \subsubsection{MEMSpa}\label{memspa}}
 
-While the MEM model achieved its goal of incorporating hook competition to improve estimates of catch rates, it did not account for spatial patterns in the survey data. Previous work (Luo \protect\hyperlink{ref-Luo2020}{2020}; Luo et al. \protect\hyperlink{ref-Luo2022}{2022}) harnessed geostatistical approaches to modify both versions of the MEM through the use of Gaussian Random Fields (GRF).
+While the MEM model achieved its goal of incorporating hook competition to improve estimates of catch rates, it did not account for spatial patterns in the survey data. Previous work (Luo \protect\hyperlink{ref-Luo2020}{2020}; Luo et al. \protect\hyperlink{ref-Luo2022}{2022}) incorporated geostatistical approaches to modify both versions of the MEM through the use of Gaussian Random Fields (GRF).
 
 The observation level of this new MEMSpa remained almost the same as described in the previous section, but the rates \(\lambda_T\) and \(\lambda_{NT}\) were modified to incorporate the location of a given longline set \(i\):
 \begin{equation}
@@ -284,7 +284,7 @@ The observation level of this new MEMSpa remained almost the same as described i
 \end{equation}
 where \(\lambda_{T,i}\) and \(\lambda_{NT,i}\) are the exponential rates for target and non-target species at the location of longline set \(i\), \(\beta_T\) and \(\beta_{NT}\) are intercept parameters, and \(\omega_{T,i}\) and \(\omega_{NT,i}\) are the values of the underlying GRF.
 
-These modifications allow the model to incorporate spatial patterns present in the data to obtain station-specific catch rates.An additional requirement is to be able to obtain a single overall estimated rate for the entire modelled area to be treated as an index of relative abundance. Due to the computational load of utilizing kriging to obtain this index, a Dirichlet method is preferred wherein the modelled area is divided into disjoint tiles based on the survey station locations, and each station is associated with a specific region and assumed to be representative of it (Luo et al. \protect\hyperlink{ref-Luo2022}{2022}). One can then obtain a spatially-weighted survey index for the whole area:
+These modifications allow the model to incorporate spatial patterns present in the data to obtain station-specific catch rates.An additional requirement is to be able to obtain a single overall estimated rate for the entire modelled area to be treated as an index of relative abundance. Due to the computational load of utilizing kriging to obtain this index, a Dirichlet method is preferred wherein the modelled area is divided into disjoint tiles based on the survey station locations, and each station is associated with a specific region and assumed to be representative of it (Luo et al. \protect\hyperlink{ref-Luo2022}{2022}). One can then obtain a spatially-weighted survey index for the whole area as follows:
 \begin{equation}
 Overall Index = \frac{\sum_{i=1}^I A_i \hat{\lambda}_i}{\sum_{i=1}^I A_i}
 \end{equation}
@@ -295,29 +295,29 @@ As the data from the stratified random survey only has a subset of its hooks whe
 \hypertarget{spatio-temporal-mem}{%
 \subsubsection{Spatio-Temporal MEM}\label{spatio-temporal-mem}}
 
-The improvements brought forward by the inclusion of spatial patterns in MEMSpa were very clear when fitted to the stratified dataset, but there still remained 20 years of available information from the fixed stations. Furthermore, the spatial model could only be fitted to a single year at a time and hence did not account for any temporal patterns in halibut or non-target species distributions and abundance. Incorporating these patterns into MEMSpa would result in a fully spatio-temporal MEM.
+The improvements brought forward by the inclusion of spatial patterns in MEMSpa were very clear when fitted to the stratified dataset, but there still remained years of available information from the fixed stations. Furthermore, MEMSpa could only be fit to a single year's data at a time and hence did not account for any temporal patterns in halibut or non-target species distributions and abundance. Incorporating the spatio-temporal variability in catches in the MEMSpa would result in a fully spatio-temporal MEM.
 
-As we aim to retain the inclusion of spatial patterns through the residual structure as done in MEMSpa, the temporal aspects would need to be incorporated (following the regression framework of MEMSpa) in the mean structure instead. There are many different approaches to the incorporation of temporal patterns in the mean for fisheries models which usually involve random effects, with common approaches including random intercepts (Venables and Dichmont \protect\hyperlink{ref-Venables2004}{2004}; Kai et al. \protect\hyperlink{ref-Kai2017}{2017}; Pedersen et al. \protect\hyperlink{ref-Pedersen2018}{2018}), random slopes (Venables and Dichmont \protect\hyperlink{ref-Venables2004}{2004}; Swain et al. \protect\hyperlink{ref-Swain2009}{2009}), random walks (Swain et al. \protect\hyperlink{ref-Swain2009}{2009}; Li et al. \protect\hyperlink{ref-Li2019}{2019}), or autoregressive models (Schnute and Richards \protect\hyperlink{ref-Schnute1995}{1995}; Kai et al. \protect\hyperlink{ref-Kai2017}{2017}). These last two could also be seen as more structured versions of other approaches wherein the random walk or autoregressive structure would be on the random intercept. Furthermore, we also decided to control for the impact of different survey vessels through random vessel effects. The novel formulation takes the following form:
+As we aim to retain the inclusion of spatial patterns through the residual structure as done in MEMSpa, we chose to incorporate the temporal aspects in the mean structure. There are many different approaches for incorporating temporal patterns in the mean and these usually involve random effects, with common approaches including random intercepts (Venables and Dichmont \protect\hyperlink{ref-Venables2004}{2004}; Kai et al. \protect\hyperlink{ref-Kai2017}{2017}; Pedersen et al. \protect\hyperlink{ref-Pedersen2018}{2018}), random slopes (Venables and Dichmont \protect\hyperlink{ref-Venables2004}{2004}; Swain et al. \protect\hyperlink{ref-Swain2009}{2009}), random walks (Swain et al. \protect\hyperlink{ref-Swain2009}{2009}; Li et al. \protect\hyperlink{ref-Li2019}{2019}), or autoregressive models (Schnute and Richards \protect\hyperlink{ref-Schnute1995}{1995}; Kai et al. \protect\hyperlink{ref-Kai2017}{2017}). These last two could also be seen as more structured versions of other approaches wherein the random walk or autoregressive structure would be on the random intercept. Furthermore, we also decided to account for variability among different survey vessels by including random vessel effects. The novel formulation takes the following form:
 \begin{equation}\label{eq:rand-int}
 \lambda_{T,i,y} = exp(\eta_{T,y}+ \nu_{T,j}+\omega_{T,i,y})
 \end{equation} \begin{equation}\label{eq:rand-slope}
 \lambda_{T,i,y} = exp(\beta_T+\eta_{T,y}+ \nu_{T,j}+\omega_{T,i,y})
 \end{equation}
-where \(\nu_{T,j}\) is the mean 0 normally distributed random effect of vessel \(j\) with associated variance \(\sigma_\nu^2\), \(\eta_{T,y}\) are the random intercepts for target species in year \(t\) or, in Equation~\ref{eq:rand-slope}, the random slopes in year \(t\) with global intercept \(\beta_T\). In Equation~\ref{eq:rand-int}, \(\eta_{T,y} \sim N(\mu_{T,int},\sigma_{T,int}^2)\), while for Equation~\ref{eq:rand-slope} \(\mu_{T,int}=0\). For the random walk and autoregressive models, they follow the same formulation as Equation~\ref{eq:rand-int} with the following added structure on \(\eta_{T,y}\):
+where \(\lambda_{T,i,y}\) is the exponential rate for the target species at station \(i\) in year \(y\), \(\nu_{T,j}\) is the random effect of vessel \(j\) (\(\nu_{T,j} \sim N(0,\sigma_\nu^2)\)), \(\eta_{T,y}\) is the random intercept for target species in year \(y\) or, in Equation~\ref{eq:rand-slope}, the random slope in year \(y\) with global intercept \(\beta_T\). \(\omega_{T,i,y}\) are the GRF values for target species at station \(i\) in year \(y\). In Equation~\ref{eq:rand-int}, \(\eta_{T,y} \sim N(\mu_{T,int},\sigma_{T,int}^2)\), while for Equation~\ref{eq:rand-slope} \(\mu_{T,int}=0\). For the random walk and autoregressive models, they follow the same formulation as Equation~\ref{eq:rand-int} with the following added structure on \(\eta_{T,y}\):
 \begin{equation}\label{eq:rand-walk}
 \eta_{T,y} = \eta_{T,y-1} + \epsilon_y, \ \ \ \epsilon_y ~ N(0,\sigma_\eta^2)
 \end{equation} \begin{equation}\label{eq:ar1}
 \eta_{T,y} = c + \phi \eta_{T,y-1} + \epsilon_y, \ \ \ \epsilon_y ~ N(0,\sigma_\eta^2)
 \end{equation}
-where \(\epsilon_y\) is a 0 mean normally distributed error term with variance \(\sigma_\eta^2\). The autoregressive model in Equation~\ref{eq:ar1} is a first order autoregressive (AR(1)) process with constant mean \(c\) and autoregressive parameter \(\phi\) bounded between -1 and 1 to ensure stationarity. Non-target rates would follow the same structure with non-target specific parameters. Importantly, this formulation allows us to incorporate fixed and random effects for target and non-target vessels for both target and non-target species separately, as the catch rates for both would not necessarily be impacted the same way by a given fishing vessel.
+where \(\epsilon_y\) is an error term (\(\epsilon_y \sim N(0,\sigma_\eta^2)\)). The autoregressive model in Equation~\ref{eq:ar1} is a first order autoregressive (AR(1)) process with constant mean \(c\) and autoregressive parameter \(\phi\) bounded between -1 and 1 to ensure stationarity. Non-target rates follow the same structure as above with non-target specific parameters.
 
-These models are fit to the data from both surveys. As the fixed stations data do not contain any information on hook condition, only the Reduced MEM can be fit to it. Model validation will be done by comparing root mean squared errors (RMSE), and by calculating AIC and BIC values for the 4 different model fits. There are 2 types of errors to look at in this model, one being the GRF at the hierarchical level of the catch rates \(\lambda\) and the other being the difference between the observations and the expected observations based on the probabilities obtained from the multinomial distribution. Either way, the RMSE is calculated as:
+These models are fit to the data from both surveys. As the fixed stations data do not contain any information on hook condition, only the Reduced MEM can be fit to it. Model selection will be done by comparing root mean squared errors (RMSE), and by calculating AIC and BIC values for the 4 different model fits to every data subsets examined. These subset include the following: the stratified data (2017 to 2020), the fixed stations (1998 to 2020), both datasets in overlapping years (2017 to 2020) and both datasets for all years (1998 to 2020). There are 2 types of errors to consider in this model, one being the GRF at the hierarchical level of the catch rates \(\lambda\) and the other being the difference between the observations and the expected observations based on the probabilities obtained from the multinomial distribution. Either way, the RMSE is calculated as:
 \begin{equation}
-RMSE = \frac{\sum_{i=1}^N e_i^2}{N}
+RMSE = \sqrt{\frac{\sum_{i=1}^N e_i^2}{N}}
 \end{equation}
-where \(e_i\) is the error, either the GRF value \(\omega_{i,y}\) for rate \(i\) in year \(y\) or the sum difference between observed number of target, non-target and hooks and the expected number of each respective values for a given longline set \(i\).
+where \(e_i\) is the error, either the GRF value \(\omega_{i,y}\) for rate \(i\) in year \(y\) or the total difference between the observed and expected value of target, non-target and hooks for a given longline set \(i\).
 
-AIC (Akaike \protect\hyperlink{ref-Akaike1974}{1974}) and BIC (Schwarz \protect\hyperlink{ref-Schwarz1978}{1978}) are both information criterion that are used to compare different model fits that try to balance between better model fit (through higher likelihood) and number of parameters. They are respectively calculated as:
+AIC (Akaike \protect\hyperlink{ref-Akaike1974}{1974}) and BIC (Schwarz \protect\hyperlink{ref-Schwarz1978}{1978}) are both information criterion that are used to compare different models fit to the same data and try to balance between better model fit (through higher likelihood) and number of parameters. They are respectively calculated as:
 \begin{equation}\label{eq:aic}
 AIC = 2K - 2 log(L)
 \end{equation} \begin{equation}\label{eq:bic}
@@ -325,40 +325,44 @@ BIC = K log(n) - 2 log(L)
 \end{equation}
 where \(K\) is the number of parameters, \(log(\cdot)\) is the natural log, \(L\) is the maximized likelihood, and \(n\) is the number of data points.
 
+Using the best model identified for the fit with both datasets from 2000 to 2021, a 10-fold cross-validation is performed to test the predictive ability of this model. This means that both datasets are split into 2 portions containing 90\% (training set) and 10\% (test set) of the data each. The model is then fit to the training set to estimate parameters and predict random effects, after which the model output is used to predict the data from the test set. Ordinary kriging is used to obtain the GRF values at the locations of the test sets. The differences between the predictions of the test sets and the actual observations can then be observed using out-of-sample RMSE calculated as shown before.
+
 \hypertarget{data}{%
 \subsection{Data}\label{data}}
 
-Once the best model is chosen, the model will be applied to various subsets of the data to be able to compare and better understand the model output. These different data subsets are: the stratified data (2017 to 2020), the fixed stations (1998 to 2020), both datasets in years where both are available (2017 to 2020) and both datasets for all years (1998 to 2020). To compare to current approaches, the mean observed catch rate in each year is also calculated by dividing the observed number of halibuts caught at each station by the product of the number of hooks and the soak time of each station to ensure that we are comparing methods on the same scale. This is done separately for both datasets combined and for the fixed station dataset.
+Models were fit to different data subset: the stratified data (2017 to 2020), the fixed stations (1998 to 2020), both datasets in overlapping years (2017 to 2020) and both datasets for all years (1998 to 2020). For comparative purposes, the nominal catch rate in each year is calculated by dividing the observed number of halibuts caught at each station by the product of the number of hooks and the soak time of each station. This was done separately for both datasets combined and for the fixed station dataset.
 
 \hypertarget{persistence-of-spatial-patterns}{%
 \subsection{Persistence of spatial patterns}\label{persistence-of-spatial-patterns}}
 
-While this was not required by the terms of reference, a quick analysis of the ability of the fixed stations data to accurately capture changes over time of Atlantic halibut and non-target species abundance was undertaken, mainly due to the fact that obtaining an unbiased estimate of population abundance when only using fixed stations is very difficult due to the absence of reliable design-based estimators (Li et al. \protect\hyperlink{ref-Li2015}{2015}; Lee and Rock \protect\hyperlink{ref-Lee2018}{2018}). Furthermore, an underlying assumption behind this type of design is that the spatial distribution of the population of interest is consistent over time (Li et al. \protect\hyperlink{ref-Li2015}{2015}; Lee and Rock \protect\hyperlink{ref-Lee2018}{2018}). In our case, this means that the distribution of Atlantic halibut and non-target species would have to be consistent with their spatial distribution between 1995 and 1997 as the strata were defined by the distribution of catches in 1995-1997. The fixed station design was able to detect changes in abundance (den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}; Trzcinski and Bowen \protect\hyperlink{ref-Trzcinski2016}{2016}; Li et al. \protect\hyperlink{ref-Li2022}{2022}), but there was concern that catch rates might not be proportional to abundance (Smith \protect\hyperlink{ref-Smith2016a}{2016}; Cox et al. \protect\hyperlink{ref-Cox2018}{2018}). As this stock recovered, the distribution of the commercial fishery changed and expanded (den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}; Li et al. \protect\hyperlink{ref-Li2022}{2022}), highlighting the need for survey coverage throughout the management unit.
+The ability of the fixed stations data to accurately capture changes in the relative abundance of Atlantic halibut and non-target species abundance was explored. Generally, obtaining an unbiased estimate of population abundance when only using fixed stations is very difficult due to the absence of reliable design-based estimators (Li et al. \protect\hyperlink{ref-Li2015}{2015}; Lee and Rock \protect\hyperlink{ref-Lee2018}{2018}). Furthermore, an underlying assumption of a fixed station survey design is that the spatial distribution of the population of interest is consistent over time (Li et al. \protect\hyperlink{ref-Li2015}{2015}; Lee and Rock \protect\hyperlink{ref-Lee2018}{2018}). In our case, this means that the distribution of Atlantic halibut and non-target species would have to be consistent with their spatial distribution between 1995 and 1997. The fixed stations design was able to detect changes in abundance (den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}; Trzcinski and Bowen \protect\hyperlink{ref-Trzcinski2016}{2016}; Li et al. \protect\hyperlink{ref-Li2022}{2022}), but there was concern that catch rates might not be proportional to abundance (Smith \protect\hyperlink{ref-Smith2016a}{2016}; Cox et al. \protect\hyperlink{ref-Cox2018}{2018}). As this stock recovered, the distribution of the commercial fishery changed and expanded (den Heyer et al. \protect\hyperlink{ref-DenHeyer2015}{2015}; Li et al. \protect\hyperlink{ref-Li2022}{2022}), highlighting the need for survey coverage throughout the management unit.
 
-A relatively straightforward approach to test the fixed stations for their ability to appropriately track population abundance change over time is test the persistence of these distributions over time (Lee and Rock \protect\hyperlink{ref-Lee2018}{2018}). As our data, even when transformed from counts to catch rates, violated the basic assumptions of the traditional ANOVA approach chosen by Lee and Rock (\protect\hyperlink{ref-Lee2018}{2018}), we instead decided to take the more simple approach of doing pairwise comparisons between years of Atlantic halibut catch rates and non-target species catch rates, which can be calculated as follow (Warren \protect\hyperlink{ref-Warren1994}{1994}; Li et al. \protect\hyperlink{ref-Li2015}{2015}):
+A relatively straightforward approach to test the fixed stations for their ability to appropriately track population abundance change over time is test the persistence of these distributions over time (Lee and Rock \protect\hyperlink{ref-Lee2018}{2018}). Given that the counts transformed to catch rates violated the basic assumptions of the traditional ANOVA approach chosen by Lee and Rock (\protect\hyperlink{ref-Lee2018}{2018}) (as our data was not normally distributed), we evaluated persistence by conducting a series of pairwise comparisons of halibut and non-target species catch rates between years. The statistic was calculated as follow (Warren \protect\hyperlink{ref-Warren1994}{1994}; Li et al. \protect\hyperlink{ref-Li2015}{2015}):
 \begin{equation}
 \bar{\omega} = \frac{s^2_y/4}{s^2_s-s^2_y/4}
 \end{equation}
-where \(\bar{\omega}\) is the measurement of persistence degree wherein a smaller value indicates a greater degree of persistence, \(s^2_y\) is the difference in catch rates of the same site between compared years, and \(s^2_s\) is the difference in catch rates between different sites in the same year. These last 2 variables are calculated as:
+where \(\bar{\omega}\) is the measurement of the degree of persistence where a smaller value indicates a greater degree of persistence, \(s^2_y\) is the difference in catch rates of the same site between compared years, and \(s^2_s\) is the difference in catch rates between different sites in the same year. These last 2 variables are calculated as:
 \begin{equation}
 s^2_s = \frac{\sum_{y=1}^2 \sum_{y=1}^{n_i} (x_{iy}-\bar{x}_y)^2}{m_1+m_2-2}
 \end{equation} \begin{equation}
 s^2_y = \sum_{i=1}^m (d_i - \bar{d})^2 / (m-1)
 \end{equation}
-where \(x_{iy}\) is the observed catch rate in site \(i\) and year \(y\), \(\bar{x}_y\) is the mean observed catch rate of year \(y\), \(m_1\) is the number of fixed stations in the first year included in the pairwise comparison while \(m_2\) is the same for the second year, \(d_i\) is the different in catch rate between two years in site \(i\) and \(\bar{d}\) is the mean catch rate difference. An important note here is that, as the coverage of stations changed over time, there are often more stations included in the \(s^2_s\) than \(s^2_y\) as all stations in both years are included in \(s^2_s\), but only the stations fished in both years can be included in \(s^2_y\).
+where \(x_{iy}\) is the observed catch rate in site \(i\) and year \(y\), \(\bar{x}_y\) is the mean observed catch rate of year \(y\), \(m_1\) is the number of fixed stations in the first year included in the pairwise comparison while \(m_2\) is the same for the second year, \(d_i\) is the difference in catch rate between two years in site \(i\) and \(\bar{d}\) is the mean catch rate difference. An important note here is that, as the coverage of stations changed over time, there are often more stations included in the \(s^2_s\) than \(s^2_y\) as all stations in both years are included in \(s^2_s\), but only the stations fished in both years can be included in \(s^2_y\). Since no p-values are used in this approach, no explicit multiple comparison corrections (e.g., Bonferonni correction) can be performed, but the large number of pairwise comparisons should temper any conclusions drawn from this analysis.
 
 \hypertarget{results}{%
 \section{Results}\label{results}}
 
-\hypertarget{model-validation}{%
-\subsection{Model Validation}\label{model-validation}}
+\hypertarget{model-selection}{%
+\subsection{Model Selection}\label{model-selection}}
 
-Out of the 4 models that were fit to the data, 3 of them (random intercept, random walk and AR(1) process) successfully converged but the model with random slopes resulted in false convergence and was therefore rejected. The RMSE, AIC and BIC values from this model validation process can be seen in Table~\ref{tab:valid}. These values appear to indicate that there is very little difference between the model fits as the RMSE are almost all identical to the \(5^{th}\) decimal. According to the AIC and BIC values, the best model would be the random walk as it has the lowest values for both metrics, although the difference is not very large. The model used for all analysis moving forward is therefore the random walk model.
+Due to issues fitting the 1999 data to all model formulations, the analysis focuses on the data starting in 2000 and does not incorporate the data from 1998 and 1999.
+
+All 4 models converged for every data subset tested here. The RMSE, AIC and BIC values from this model validation process can be seen in Table~\ref{tab:valid}. These values appear to indicate that there is little difference between the model fits when it comes to RMSE. According to the AIC and BIC values, the best model would be the random walk as it has the lowest values for both metrics. This was the case for every single fit with the exception of the fit using both datasets from 2017 to 2021, where the random intercept and random slope models where equal in their AIC and BIC values (see Appendix C). However, closer analysis of both fits showed that the Hessian matrices were not positive-definite, which made it unable to estimate the standard error of some variance parameters and potentially indicating issues with convergence. Rejecting those models, the next best model was the random walk model as for the other fits. The model used for all analysis moving forward is therefore the random walk model.
 
 \begingroup\fontsize{9}{11}\selectfont
 \begingroup\fontsize{9}{11}\selectfont
 \begin{longtable}[t]{cccccc}
-\caption{\label{tab:valid}Outputs for model validation approaches, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).}\\
+\caption{\label{tab:valid}Outputs for model selection approaches when fiting random walk model to both datasets from 2000 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).}\\
 \toprule
 \textbf{Model} & \textbf{Observation RMSE} & \textbf{Target Field RMSE} & \textbf{Non-Target Field RMSE} & \textbf{AIC} & \textbf{BIC}\\
 \midrule
@@ -372,19 +376,49 @@ Out of the 4 models that were fit to the data, 3 of them (random intercept, rand
 \endfoot
 \bottomrule
 \endlastfoot
-Random Intercept & 0.6711538 & 1.311270 & 1.705561 & 230,733.0 & 230,817.3\\
-Random Walk & 0.6711406 & 1.301307 & 1.711642 & 230,673.6 & 230,757.9\\
-AR(1) Process & 0.6711534 & 1.311766 & 1.705651 & 230,735.6 & 230,832.8\\*
+Random Intercept & 0.6711552 & 1.310907 & 1.705889 & 230,747.7 & 230,819.0\\
+Random Walk & 0.6711413 & 1.301179 & 1.712035 & 230,686.6 & 230,757.8\\
+Random Slope & 0.6711552 & 1.310907 & 1.705885 & 230,747.7 & 230,819.0\\
+AR(1) Process & 0.6711544 & 1.311352 & 1.706027 & 230,750.3 & 230,834.5\\*
 \end{longtable}
 \endgroup{}
 \endgroup{}
 
-\hypertarget{fit-to-data}{%
-\subsection{Fit to Data}\label{fit-to-data}}
+\hypertarget{model-validation}{%
+\subsection{Model Validation}\label{model-validation}}
 
-As the best model was considered to be the random walk approach, that model was the one fit to the varying data subsets. Due to issues fitting the 1999 data to the spatial model and to various versions of a spatio-temporal model, the analysis focuses on the data starting in 2000 and does not incorporate the data from 1998 and 1999.
+\begingroup\fontsize{9}{11}\selectfont
+\begingroup\fontsize{9}{11}\selectfont
+\begin{longtable}[t]{ccc}
+\caption{\label{tab:cv-frame}RMSE (in predicted numbers) and RMSE standard error obtained from 10-fold cross-validation output using the random walk model to both datasets from 2000 to 2021}\\
+\toprule
+\textbf{RMSE Type} & \textbf{RMSE} & \textbf{SE}\\
+\midrule
+\endfirsthead
+\caption*{}\\
+\toprule
+\textbf{RMSE Type} & \textbf{RMSE} & \textbf{SE}\\
+\midrule
+\endhead
 
-The model successfully converged for all cases, but the fits with the 2017 and onwards data show signs of overparameterization as all of them have at least 1 variance parameter related to the random intercepts that is estimated arbitrarily close to 0 (see Table~\ref{tab:par-estim}). Most other parameters are estimated very similarly for all fits with the exception of \(p_{nt}\) and \(\mu_{nt}\). \(p_{nt}\) is estimated at a very low value when only the fixed stations are included with a correspondingly lower estimate of \(\mu_{nt}\), while fits that include the stratified data estimate both parameters at significantly higher values.
+\endfoot
+\bottomrule
+\endlastfoot
+Overall RMSE & 43.185422 & 1.5553442\\
+Target RMSE & 5.564864 & 0.4198784\\
+Non-Target RMSE & 56.908617 & 3.0792351\\*
+\end{longtable}
+\endgroup{}
+\endgroup{}
+
+The RMSE calculated from the 10-fold cross-validation can be seen in Table~\ref{tab:cv-frame}. In this case, the Overall RMSE aggregates the RMSE for target species, non-target species, and empty hooks (including baited and unbaited hooks in the stratified dataset) and therefore represent the total number of hooks with the wrong outcome (e.g., 1 hook predicted to have a target species when it was actually empty) when predicting on the test dataset. The RMSE for target species, the main variable of interest for this model, is fairly small as it represents \textasciitilde0.5\% of the average number of hooks (1000). This is not surprising as the target species usually represents the smallest component of a given set, as there are usually more target species and empty hooks than halibut. An important caveat here is that 2 of the fits resulted in false convergence, but their RMSE and parameter estimates were not substantially different from the other folds. As the datasets have a substantial amount of zeroes and present complex spatio-temporal patterns, it is not entirely surprising that it would be difficult to work with when some data is removed. There were no obvious differences in the training data used for these specific folds with the only potential explanation that the peak observed number of halibut was higher in the test datasets for these folds, which might indicate that these strong tows contain a lot of information from the perspective of the model. Overall, there were no substantial differences in the RMSE calculated for each fold (see Appendix C).
+
+\hypertarget{fits-to-alternative-data-subsets}{%
+\subsection{Fits to Alternative Data Subsets}\label{fits-to-alternative-data-subsets}}
+
+As the best model was considered to be the random walk approach for all data combinations, that model was the one fit to the varying data subsets. As for model selection, data from 1998 and 1999 were not included in the analysis.
+
+The model successfully converged when fit to all data subsets, but the fits to the subsets with data from 2017 to 2021 showed signs of overparameterization as all of them have at least 1 variance parameter related to the random intercepts that is estimated arbitrarily close to 0 (see Table~\ref{tab:par-estim}). Most other parameters are estimated very similarly for all fits with the exception of \(p_{nt}\) (the probability of escape for non-target animals) and \(\mu_{nt}\) (the mean of the random intercept distribution for 2000). \(p_{nt}\) is estimated at a very low value when only the fixed stations are included with a correspondingly lower estimate of \(\mu_{nt}\), while estimates based on fits to the stratified data are substantially higher for both parameters.
 
 \begingroup\fontsize{7}{9}\selectfont
 \begingroup\fontsize{7}{9}\selectfont
@@ -404,8 +438,6 @@ The model successfully converged for all cases, but the fits with the 2017 and o
 \bottomrule
 \endlastfoot
 $p_{nt}$ & 0.788 (0.001) & 0.129 (0.009) & 0.881 (0.0005) & 0.246 (0.015) & 0.903 (0.0005)\\
-Anisotropy Parameter 1 & -0.100 (0.027) & -0.081 (0.026) & -0.131 (0.095) & -0.186 (0.079) & -0.085 (0.090)\\
-Anisotropy Parameter 2 & -0.021 (0.025) & 0.020 (0.026) & -0.019 (0.066) & 0.129 (0.077) & -0.147 (0.078)\\
 $\phi_t$ & 0.050 (0.002) & 0.053 (0.002) & 0.054 (0.005) & 0.060 (0.007) & 0.058 (0.007)\\
 $\phi_{nt}$ & 0.048 (0.001) & 0.060 (0.002) & 0.015 (0.002) & 0.046 (0.005) & 0.051 (0.005)\\
 $\sigma_t$ & 1.619 (0.032) & 1.468 (0.032) & 1.956 (0.085) & 1.408 (0.080) & 1.985 (0.101)\\
@@ -420,7 +452,7 @@ $\mu_{nt}$ & -7.531 (0.384) & -9.432 (0.202) & -6.319 (0.225) & -9.559 (0.381) &
 \endgroup{}
 \endgroup{}
 
-The distribution of vessel effects are very similar between model fits, with more variability and a wider distribution when more data is incorporated (i.e., fits with just the fixed stations or just the stratified data from 2017 onwards tend to have lower variance and tighter distribution, see Figure~\ref{fig:vess-eff}). This is likely caused by the stricter protocol for the stratified random sets that result in less variability between vessels.
+The distribution of vessel effects are very similar between model fits, with more variability and a wider distribution when more data is incorporated (i.e., fits with just the fixed stations or just the stratified data from 2017 onwards tend to have lower variance and tighter distribution, see Figure~\ref{fig:vess-eff}). This can be caused by many factors including the stricter protocol for the stratified random sets that could result in less variability between vessels or differences between individual vessels and the areas and years they fished.
 \begin{figure}[htb]
 
 {\centering \pdftooltip{\includegraphics[width=0.6\linewidth]{vess_eff_t_walk}}{Figure \ref{fig:vess-eff}} \pdftooltip{\includegraphics[width=0.6\linewidth]{vess_eff_nt_walk}}{Figure \ref{fig:vess-eff}} 
@@ -429,7 +461,7 @@ The distribution of vessel effects are very similar between model fits, with mor
 
 \caption{Distribution of estimated vessel effect using data from the fixed stations and stratified survey design both together and separately between 2000 and 2021 and between 2017 and 2021.}\label{fig:vess-eff}
 \end{figure}
-The overparameterization of fits that only contain data from 2017 onwards is very visible in Figure~\ref{fig:rand-int} where most intercepts do not vary over time due to the model not being able to estimate the variance around them. For the fits that have data starting in 2000, there are clear changes over time in the random intercepts. Non-target species intercepts are always lower when only the fixed stations are considered, as expected with the difference in the estimated value of \(p_{nt}\). Notably, the stratified random survey, with the additional hook condition data, suggests an increase in overall average expected non-target catch rates starting in 2016 which does not show up when the model is fit only to fixed station data.
+The overparameterization of fits to data subsets that only contain data from 2017 onwards is very visible in Figure~\ref{fig:rand-int} where most intercepts do not vary annually due to the model not being able to estimate the variance around them. For the fits that have data starting in 2000, there are clear changes over time in the random intercepts. Non-target species intercepts are always lower when only the fixed stations are considered, as expected with the difference in the estimated value of \(p_{nt}\). Notably, the stratified random survey, with the additional hook condition data, suggests an increase in overall average expected non-target catch rates starting in 2016 which does not show up when the model is fit only to fixed station data.
 
 The pattern for the target species (halibut) are a lot more similar between model fits, with both capturing an overall increase in expected catch rates over the time series. However, the fit with just the fixed stations has a slightly larger increase.
 \begin{figure}[htb]
@@ -459,14 +491,14 @@ For the fits that incorporate data starting in 2000, the trends between the two 
 
 \caption{Estimated overall index for non-target species using data from the fixed stations and stratified survey design both together and separately between 2000 and 2021 and 2017 and 2021. The uncertainty around the model fits represent +/- 1 standard error.}\label{fig:non-t-indices}
 \end{figure}
-Looking at the outcomes spatially for the fit with both datasets, the locations of halibut high catch rates appear to generally focus around the Scotian Shelf in the western part of the modelled area, with some spikes around the Laurentian Channel in the middle and a few isolated spikes on the eastern edge of the modelled area (Figure~\ref{fig:target-spat}). For non-target catch rates, the highest spikes are consistently located on the western edge of the area towards the Gulf of Maine and the Bay of Fundy, with other less common spikes located east of the Laurentian Channel. The spatial outcomes from the fit with just the fixed stations has similar patterns (figures in Appendix 2).
+Looking at the outcomes spatially for the fit to both datasets, the locations of high halibut catch rates appeared to be generally focused around the Scotian Shelf in the western part of the modelled area, with some spikes around the Laurentian Channel and a few isolated spikes on the eastern edge of the modelled area (Figure~\ref{fig:target-spat}). For non-target catch rates, the highest spikes are consistently located on the western edge of the area towards the Gulf of Maine and the Bay of Fundy, with other less common spikes located east of the Laurentian Channel. The spatial outcomes from the fit with just the fixed stations has similar patterns (figures in Appendix 2).
 \begin{figure}[htb]
 
 {\centering \pdftooltip{\includegraphics[width=1\linewidth]{all_ldat_both_data}}{Figure \ref{fig:target-spat}} 
 
 }
 
-\caption{Station-specific estimated target species catch rates obtained using data from both the fixed stations and stratified survey design.}\label{fig:target-spat}
+\caption{Station-specific estimated target species catch rates (number of animal per hook per minute) obtained using data from both the fixed stations and stratified survey design.}\label{fig:target-spat}
 \end{figure}
 \begin{figure}[htb]
 
@@ -474,15 +506,15 @@ Looking at the outcomes spatially for the fit with both datasets, the locations 
 
 }
 
-\caption{Station-specific estimated non-target species catch rates obtained using data from both the fixed stations and stratified survey design.}\label{fig:non-target-spat}
+\caption{Station-specific estimated non-target species catch rates (number of animal per hook per minute) obtained using data from both the fixed stations and stratified survey design.}\label{fig:non-target-spat}
 \end{figure}
 \hypertarget{persistence}{%
 \subsection{Persistence}\label{persistence}}
 
-The persistence index of the spatial pattern for target species (halibut) indicate that the fixed stations are extremely likely (\textgreater98\%, see table in Li et al. (\protect\hyperlink{ref-Li2015}{2015})) to capture the changes over time of this population abundance as the index is extremely low for all combination of years. However, the persistence of non-target species exhibits a different pattern (Figure~\ref{fig:persist}) wherein there appears to be a spatial shift in their distribution between early in the time series (mid-2000s) and the peak halibut abundance late in the time series (2017 to 2020). This would represent a high chance that the fixed stations would miss changes in their distribution which, due to the nature of the multinomial model, would impact the estimation of target catch rates. Figure~\ref{fig:rand-int} shows some evidence of this happening in that the expected catch rate for non-target species increases in the late 2010s when the stratified data is included, but not when only the fixed stations are analyzed.
+The persistence index of the spatial pattern for target species (halibut) indicated that the fixed stations are extremely likely (\textgreater98\% with the highest persistence at \textasciitilde0.1, see table in Li et al. (\protect\hyperlink{ref-Li2015}{2015})) to capture the abundance changes of this population abundance over time as the index is extremely low for all year pairings. However, the persistence of non-target species exhibits a different pattern (Figure~\ref{fig:persist}, rescaled figure for target species available in Appendix B) wherein there appears to be a spatial shift in their distribution between early in the time series (mid-2000s) and the peak halibut abundance late in the time series (2017 to 2020). This would represent a higher chance that the fixed stations would miss changes in their distribution which, due to the nature of the multinomial model, would impact the estimation of target catch rates. Figure~\ref{fig:rand-int} shows some evidence of this happening in the fits with data from 2000 to 2021 in that the expected catch rate for non-target species increases in the late 2010s when the stratified data is included, but not when only the fixed stations are analyzed.
 \begin{figure}[htb]
 
-{\centering \pdftooltip{\includegraphics[width=0.6\linewidth]{persist_raster_plot_walk}}{Figure \ref{fig:persist}} \pdftooltip{\includegraphics[width=0.6\linewidth]{persist_nt_raster_plot_walk}}{Figure \ref{fig:persist}} 
+{\centering \pdftooltip{\includegraphics[width=0.6\linewidth]{persist_raster_plot_walk_scaled}}{Figure \ref{fig:persist}} \pdftooltip{\includegraphics[width=0.6\linewidth]{persist_nt_raster_plot_walk}}{Figure \ref{fig:persist}} 
 
 }
 
@@ -497,7 +529,7 @@ The current stock assessment model requires the indices of abundance to be bioma
 
 Similarly to previous versions of the MEM, our spatio-temporal MEM and our analysis of its performance on the Atlantic halibut fishery emphasizes the importance of accounting for the abundance of non-target species for a multivariate approach. The inability to estimate the probability of non-target escapes without hook condition information, illustrated very well in the fits that do not include the stratified dataset, demonstrates this impact very well. This underlines the importance of having a reliable estimate of the abundance of these non-target species. The modelling output themselves show that overestimating the abundance of these non-target species will likely result in an underestimation of the halibut population abundance, underestimating their abundance would likely result in the opposite, and completely ignoring them is likely to result in unpredictable and variable biases.
 
-A key outcome from this analysis is that there is evidence that, while the fixed stations were likely appropriate to capture the large changes of halibut abundance, they are likely not capturing changes in distribution and abundance of non-target species which will subsequently impact the estimation of halibut abundance. As the longline gear catches a great number of other species (e.g., cod, dogfish, etc.), it is not too surprising that their overall joint spatial distribution would shift which, as we have shown, would then have an impact on the halibut catch rates. The timing of the implementation of the stratified random sampling design (2017) therefore appears to be fortunate, as those are the years where the fixed stations seem to be missing the shift in abundance of non-target species. This new design does capture these changes, allowing the model to therefore get a more accurate estimate of the underlying halibut abundance. Furthermore, the estimates from the stratified random design will only get more accurate and precise as years are added into the time series.
+A key outcome from this analysis is that there is evidence that, while the fixed stations were likely appropriate to capture the large changes of halibut abundance, they are likely not capturing changes in distribution and abundance of non-target species which will subsequently impact the estimation of halibut abundance. While the persistence analysis on its own provides only relatively weak evidence (due to having a high number of pairwise comparisons), this evidence is supported by the different trends in random intercepts when the stratified dataset is included and when it isn't. As the longline gear catches a great number of other species (e.g., cod, dogfish, etc.), it is not too surprising that their overall joint spatial distribution might shift which, as we have shown, would then have an impact on the halibut catch rates. The timing of the implementation of the stratified random sampling design (2017) therefore appears to be fortunate, as those are the years where the fixed stations seem to be missing the shift in abundance of non-target species. This new design does capture these changes, allowing the model to therefore get a more accurate estimate of the underlying halibut abundance. Furthermore, the estimates from the stratified random design will only get more accurate and precise as years are added to the time series.
 
 While it was developed for this specific longline survey, this model could easily be applied to any longline fisheries or other passive sampling gear that would be impacted by hook or bait competition and promises to improve indices of abundance used for stock assessment models. Depending on the fishery, it could be of great value to further modify the multinomial equation used by our approach to expand on the non-target species to include multiple specific species. More specifically, if there are a finite amount of other species being caught aside from the target, it would likely lead to improvements in estimated catch rates for the target species.
 
@@ -651,6 +683,38 @@ Trzcinski, M, Armsworthy, S, Wilson, S, Mohn, R, Fowler, M and Campana, S. 2009.
 \label{app:second-appendix}
 \begin{figure}[htb]
 
+{\centering \pdftooltip{\includegraphics[width=1\linewidth]{prop_fix}}{Figure \ref{fig:prop-fix}} 
+
+}
+
+\caption{Histogram of proportion of each category in each set for fixed stations data.}\label{fig:prop-fix}
+\end{figure}
+\begin{figure}[htb]
+
+{\centering \pdftooltip{\includegraphics[width=1\linewidth]{prop_strat}}{Figure \ref{fig:prop-strat}} 
+
+}
+
+\caption{Histogram of proportion of each category in each set for stratified dataset.}\label{fig:prop-strat}
+\end{figure}
+\begin{figure}[htb]
+
+{\centering \pdftooltip{\includegraphics[width=1\linewidth]{num_fix}}{Figure \ref{fig:num-fix}} 
+
+}
+
+\caption{Histogram of numbers of each category in each set for fixed stations data.}\label{fig:num-fix}
+\end{figure}
+\begin{figure}[htb]
+
+{\centering \pdftooltip{\includegraphics[width=1\linewidth]{num_strat}}{Figure \ref{fig:num-strat}} 
+
+}
+
+\caption{Histogram of numbers of each category in each set for stratified dataset.}\label{fig:num-strat}
+\end{figure}
+\begin{figure}[htb]
+
 {\centering \pdftooltip{\includegraphics[width=1\linewidth]{1phi_no_cons_mean_all_ldat}}{Figure \ref{fig:target-spat-fixed}} 
 
 }
@@ -665,6 +729,158 @@ Trzcinski, M, Armsworthy, S, Wilson, S, Mohn, R, Fowler, M and Campana, S. 2009.
 
 \caption{Station-specific estimated non-target species catch rates obtained using data from only the fixed stations.}\label{fig:non-target-spat-fixed}
 \end{figure}
+\begin{figure}[htb]
+
+{\centering \pdftooltip{\includegraphics[width=0.75\linewidth]{comp_all_ldat_comp_equal}}{Figure \ref{fig:new-target-indices}} \pdftooltip{\includegraphics[width=0.75\linewidth]{comp_all_ldant_comp_equal}}{Figure \ref{fig:new-target-indices}} 
+
+}
+
+\caption{Estimated overall index for target and non-target species (expected number of halibut caught per hook per minute) by the random walk model where only non-target species can escape and the same model where target species and non-target species have an identical probability of escape using data from the fixed stations and stratified survey design together between 2000 and 2021 and between 2017 and 2021. The uncertainty represent +/- 1 standard error.}\label{fig:new-target-indices}
+\end{figure}
+\begin{figure}[htb]
+
+{\centering \pdftooltip{\includegraphics[width=0.6\linewidth]{persist_raster_plot_walk}}{Figure \ref{fig:persist-app}} 
+
+}
+
+\caption{Persistence index between years for target species catch rates.}\label{fig:persist-app}
+\end{figure}
+\clearpage
+
+\section{}
+\label{app:third-appendix}
+
+\begingroup\fontsize{9}{11}\selectfont
+\begingroup\fontsize{9}{11}\selectfont
+\begin{longtable}[t]{cccccc}
+\caption{\label{tab:valid-app}Outputs for model selection approaches when fiting random walk model to both datasets from 2017 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).}\\
+\toprule
+\textbf{Model} & \textbf{Observation RMSE} & \textbf{Target Field RMSE} & \textbf{Non-Target Field RMSE} & \textbf{AIC} & \textbf{BIC}\\
+\midrule
+\endfirsthead
+\caption*{}\\
+\toprule
+\textbf{Model} & \textbf{Observation RMSE} & \textbf{Target Field RMSE} & \textbf{Non-Target Field RMSE} & \textbf{AIC} & \textbf{BIC}\\
+\midrule
+\endhead
+
+\endfoot
+\bottomrule
+\endlastfoot
+Random Intercept & 0.7678375 & 1.587530 & 1.381389 & 108,129.9 & 108,185.8\\
+Random Walk & 0.7678405 & 1.587320 & 1.375622 & 108,181.7 & 108,237.5\\
+Random Slope & 0.7678375 & 1.587530 & 1.381383 & 108,129.9 & 108,185.8\\
+AR(1) Process & 0.7678409 & 1.584584 & 1.374446 & 108,189.7 & 108,255.8\\*
+\end{longtable}
+\endgroup{}
+\endgroup{}
+
+\begingroup\fontsize{9}{11}\selectfont
+\begingroup\fontsize{9}{11}\selectfont
+\begin{longtable}[t]{cccccc}
+\caption{\label{tab:valid-app2}Outputs for model selection approaches when fiting random walk model to the fixed stations dataset from 2000 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).}\\
+\toprule
+\textbf{Model} & \textbf{Observation RMSE} & \textbf{Target Field RMSE} & \textbf{Non-Target Field RMSE} & \textbf{AIC} & \textbf{BIC}\\
+\midrule
+\endfirsthead
+\caption*{}\\
+\toprule
+\textbf{Model} & \textbf{Observation RMSE} & \textbf{Target Field RMSE} & \textbf{Non-Target Field RMSE} & \textbf{AIC} & \textbf{BIC}\\
+\midrule
+\endhead
+
+\endfoot
+\bottomrule
+\endlastfoot
+Random Intercept & 0.0017602 & 1.187879 & 1.463658 & 56,782.04 & 56,851.63\\
+Random Walk & 0.0017645 & 1.190783 & 1.469420 & 56,698.79 & 56,768.37\\
+Random Slope & 0.0017602 & 1.187879 & 1.463655 & 56,782.01 & 56,851.59\\
+AR(1) Process & 0.0017605 & 1.187945 & 1.463765 & 56,785.64 & 56,867.87\\*
+\end{longtable}
+\endgroup{}
+\endgroup{}
+
+\begingroup\fontsize{9}{11}\selectfont
+\begingroup\fontsize{9}{11}\selectfont
+\begin{longtable}[t]{cccccc}
+\caption{\label{tab:valid-app3}Outputs for model selection approaches when fiting random walk model to the fixed stations dataset from 2017 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).}\\
+\toprule
+\textbf{Model} & \textbf{Observation RMSE} & \textbf{Target Field RMSE} & \textbf{Non-Target Field RMSE} & \textbf{AIC} & \textbf{BIC}\\
+\midrule
+\endfirsthead
+\caption*{}\\
+\toprule
+\textbf{Model} & \textbf{Observation RMSE} & \textbf{Target Field RMSE} & \textbf{Non-Target Field RMSE} & \textbf{AIC} & \textbf{BIC}\\
+\midrule
+\endhead
+
+\endfoot
+\bottomrule
+\endlastfoot
+Random Intercept & 0.0012898 & 1.168684 & 1.431670 & 7,459.491 & 7,505.696\\
+Random Walk & 0.0012912 & 1.168679 & 1.434893 & 7,449.267 & 7,495.472\\
+Random Slope & 0.0012898 & 1.168684 & 1.431671 & 7,459.483 & 7,505.688\\
+AR(1) Process & 0.0012882 & 1.167309 & 1.433463 & 7,455.844 & 7,510.450\\*
+\end{longtable}
+\endgroup{}
+\endgroup{}
+
+\begingroup\fontsize{9}{11}\selectfont
+\begingroup\fontsize{9}{11}\selectfont
+\begin{longtable}[t]{cccccc}
+\caption{\label{tab:valid-app4}Outputs for model selection approaches when fiting random walk model to the stratified stations dataset from 2017 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).}\\
+\toprule
+\textbf{Model} & \textbf{Observation RMSE} & \textbf{Target Field RMSE} & \textbf{Non-Target Field RMSE} & \textbf{AIC} & \textbf{BIC}\\
+\midrule
+\endfirsthead
+\caption*{}\\
+\toprule
+\textbf{Model} & \textbf{Observation RMSE} & \textbf{Target Field RMSE} & \textbf{Non-Target Field RMSE} & \textbf{AIC} & \textbf{BIC}\\
+\midrule
+\endhead
+
+\endfoot
+\bottomrule
+\endlastfoot
+Random Intercept & 0.7932118 & 1.556453 & 0.8235129 & 84,070.09 & 84,120.04\\
+Random Walk & 0.7932118 & 1.556453 & 0.8235128 & 84,065.74 & 84,115.70\\
+Random Slope & 0.7932118 & 1.556453 & 0.8235036 & 84,076.36 & 84,126.31\\
+AR(1) Process & 0.7932122 & 1.557215 & 0.8223264 & 84,079.74 & 84,138.77\\*
+\end{longtable}
+\endgroup{}
+\endgroup{}
+
+\begingroup\fontsize{9}{11}\selectfont
+\begingroup\fontsize{9}{11}\selectfont
+\begin{longtable}[t]{cccc}
+\caption{\label{tab:cv-frame-fold}RMSE obtained from 10-fold cross-validation output for each fold using the random walk model to both datasets from 2000 to 2021}\\
+\toprule
+\textbf{CV Fold} & \textbf{Overall RMSE} & \textbf{Target RMSE} & \textbf{Other RMSE}\\
+\midrule
+\endfirsthead
+\caption*{}\\
+\toprule
+\textbf{CV Fold} & \textbf{Overall RMSE} & \textbf{Target RMSE} & \textbf{Other RMSE}\\
+\midrule
+\endhead
+
+\endfoot
+\bottomrule
+\endlastfoot
+1 & 44.70686 & 6.630367 & 60.38271\\
+2 & 43.65656 & 6.211522 & 57.48138\\
+3 & 41.96582 & 4.933174 & 54.23545\\
+4 & 42.77388 & 5.864730 & 56.85416\\
+5 & 48.66753 & 5.720658 & 64.42231\\
+6 & 43.31645 & 4.954222 & 58.60077\\
+7 & 39.43232 & 4.880780 & 50.27927\\
+8 & 45.40232 & 5.721324 & 59.55889\\
+9 & 40.26005 & 4.799672 & 53.77724\\
+10 & 41.67242 & 5.932196 & 53.49398\\*
+\end{longtable}
+\endgroup{}
+\endgroup{}
+
 \end{appendices}
 
 \clearpage
