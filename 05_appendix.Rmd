@@ -12,14 +12,10 @@ After that, all subsequent sections will be turned into appendices. -->
 \flushright{2 September 2021}
 
 \centering
-\textbf{Terms of Reference (TOR)}
+\textbf{Selected Terms of Reference (TOR)}
 \flushleft
 
 Statistical innovations for obtaining and validating Atlantic halibut longline survey indices of exploitable biomass through implementation of a multinomial, hook occupancy model.
-
-**Estimated Value**
-
-The total value of any contract(s) emanating from this TOR is $10000 (4 months).
 
 **Objectives of the Requirement**
 
@@ -46,80 +42,6 @@ The deliverables for the project will be to:
 4) Develop a spatiotemporal model for the entire time series, 1998-2020, of fixed station and random survey data
 
 5) A technical report.
-
-**Expected Start and Completion Dates**
-
-All work will be completed between September 2021 and January 2022. The weekly number of hours worked will vary over that timeframe, as agreed upon between DFO and Dalhousie University (Dr. Joanna Mills Flemming).
-
-**Contingencies**
-
-If the tasks/deliverables are in jeopardy due to unforeseen circumstances such as student leaving the project or because of other complications or poor work quality, the Scientific Authorities will proceed with the project goals through contracts to other students and/or conduct the analyses themselves.
-
-**Reporting Requirements**
-
-1. Basic updates from the student on how work is progressing are required weekly by email or phone with the Scientific Authorities.
-
-2. At the end of work, a detailed report, relating the progress of the project with respect to the identified deliverables, will be provided to the Project Authorities. This report must be sufficiently detailed that the Project Authorities are able to evaluate whether the progress of the project is sufficient that contingency plans, as outlined above, do not need to be implemented.
-
-**Change Management Procedures**
-
-Changes to the scope of the project will be made through agreement by all parties and documented through email correspondence.
-
-**Other Terms and Conditions**
-
-Authorities
-
-Scientific Authorities
-
-Dr. Joanna Mills Flemming and Dr. Bruce Smith
-
-Department of Mathematics and Statistics | Dalhousie University
-
-902-494-2572 PO Box 15000 | Halifax NS B3H 4R2 Canada
-
-Contracting Authority (Dalhousie University)
-
-Miriam Breslow
-
-HR Advisor, Academic Staff Relations
-
-Human Resources | Dalhousie University
-
-902-494-2965
-
-Henry Hicks Administration Building, Room 150
-
-PO Box 15000 | Halifax, NS B3H 4R2 Canada
-
-Project Authorities (DFO and Atlantic Halibut Council)
-
-Dr. Lingbo Li and Dr. Cornelia (Nell) den Heyer
-
-Population Ecology Division, Science Branch,
-
-Fisheries and Oceans Canada,
-
-P.O. Box 1006, Dartmouth, NS B2Y 4A2
-
-Brendan.Wringe@dfo-mpo.gc.ca
-
-Mr. Bruce Chapman
-
-Atlantic Halibut Council
-
-bchapman@sympatico.ca
-
-**DFO and Atlantic Halibut Council Obligations**
-
-DFO and the Atlantic Halibut Council will provide all relevant fisheries and biological data and access to staff members or fishers who will be available for advice on, and participate in, the proposed activities. DFO will provide training in the data and current modelling procedures as background to the work.
-
-**Location of Work**
-
-Work will be conducted at Dalhousie University or with the other parties as expertise or third-party funding sources requires.
-
-**Remuneration**
-
-Invoicing will be monthly; an initial invoice in September 2021 and a final invoice in January 2022.
 
 **References**
 
@@ -182,25 +104,25 @@ knitr::include_graphics("persist_raster_plot_walk.png")
 ```{r valid-app, echo=F}
 load("validation_table_full_2017.RData")
 colnames(valid_frame_full_2017)<-c("Model","Observation RMSE","Target Field RMSE", "Non-Target Field RMSE", "AIC", "BIC")
-csasdown::csas_table(valid_frame_full_2017,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model selection approaches when fiting random walk model to both datasets from 2017 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
+csasdown::csas_table(valid_frame_full_2017,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model selection approaches when fitting various models to both datasets from 2017 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
 ```
 
 ```{r valid-app2, echo=F}
 load("validation_table_fixed.RData")
 colnames(valid_frame_fixed)<-c("Model","Observation RMSE","Target Field RMSE", "Non-Target Field RMSE", "AIC", "BIC")
-csasdown::csas_table(valid_frame_fixed,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model selection approaches when fiting random walk model to the fixed stations dataset from 2000 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
+csasdown::csas_table(valid_frame_fixed,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model selection approaches when fitting various models to the fixed stations dataset from 2000 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
 ```
 
 ```{r valid-app3, echo=F}
 load("validation_table_fixed_2017.RData")
 colnames(valid_frame_fixed_2017)<-c("Model","Observation RMSE","Target Field RMSE", "Non-Target Field RMSE", "AIC", "BIC")
-csasdown::csas_table(valid_frame_fixed_2017,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model selection approaches when fiting random walk model to the fixed stations dataset from 2017 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
+csasdown::csas_table(valid_frame_fixed_2017,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model selection approaches when fitting various models to the fixed stations dataset from 2017 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
 ```
 
 ```{r valid-app4, echo=F}
 load("validation_table_strat_2017.RData")
 colnames(valid_frame_strat_2017)<-c("Model","Observation RMSE","Target Field RMSE", "Non-Target Field RMSE", "AIC", "BIC")
-csasdown::csas_table(valid_frame_strat_2017,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model selection approaches when fiting random walk model to the stratified stations dataset from 2017 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
+csasdown::csas_table(valid_frame_strat_2017,format="latex",booktab=T,escape=F,align="c",row.names = F, caption = "Outputs for model selection approaches when fitting various models to the stratified stations dataset from 2017 to 2021, including root mean squared errors (RMSE), Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC).",font_size=9)
 ```
 
 ```{r cv-frame-fold,echo=F}
