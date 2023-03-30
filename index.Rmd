@@ -1,7 +1,7 @@
 ---
 title: "Formulating a spatio-temporal model to analyze longline survey data for the Atlantic Halibut fishery"
-year: 2022
-report_number: nnn
+year: 2023
+report_number: 3529
 author: |
   Raphaël R. McDonald^1^,
   Brad Hubley^2^,
@@ -10,7 +10,7 @@ author: |
   and Joanna Mills Flemming^1^
 author_list: "McDonald, R.R., Hubley, B., Li, L., den Heyer, C.E., and Mills Flemming, J."
 region: Maritimes Region
-isbn: ""
+isbn: "978-0-660-47827-2"
 address: |
   ^1^Department of Mathematics and Statistics\
      Dalhousie University, 6299 South Street\
@@ -23,7 +23,7 @@ address: |
 phone: ""
 author_footnote: "Email: raphael.mcdonald@dfo-mpo.gc.ca, rp732243@dal.ca | telephone: (581) 307-7013"
 abstract: |
-  The Industry-DFO Atlantic halibut (*Hippoglossus hippoglossus*) longline survey has been running since 1998 (using a fixed stations design) with the aim of providing a reliable index of halibut abundance. **A 2016 review of modelling approaches recommended the use of a multinomial exponential model (MEM) to account for hook competition and the abundance of non-target species and further to survey redesign. A new stratified random survey was initiated in 2017.** Since then, this new stratified survey was run in parallel with the fixed station survey, but with a reduced number of fixed stations. The new survey has more standardized fishing protocols and additional hook condition data are collected to inform the MEM. **The aim of this report is to present a new spatio-temporal version of MEM that is able to successfully model data from both the fixed stations and the stratified random sampling design within a unified framework. It also incorporates additional fixed and random effects, where the random effects account for the among-group variability associated with fishing vessels.** The analysis demonstrates the potential bias in abundance estimates associated with modelling changes in halibut and non-target distributions and abundance over time that would occur using only the fixed stations design. It furthers shows that the switch to a stratified random sampling design was timely and helped better quantify the increase in halibut catch rates observed since 2017.
+  The Industry-DFO Atlantic halibut (*Hippoglossus hippoglossus*) longline survey has been running since 1998 (using a fixed stations design) with the aim of providing a reliable index of halibut abundance. A 2016 review of modelling approaches recommended the use of a multinomial exponential model (MEM) to account for hook competition and the abundance of non-target species and further to survey redesign. A new stratified random survey was initiated in 2017. Since then, this new stratified survey was run in parallel with the fixed station survey, but with a reduced number of fixed stations. The new survey has more standardized fishing protocols and additional hook condition data are collected to inform the MEM. The aim of this report is to present a new spatio-temporal version of MEM that is able to successfully model data from both the fixed stations and the stratified random sampling design within a unified framework. It also incorporates additional fixed and random effects, where the random effects account for the among-group variability associated with fishing vessels. The analysis demonstrates the potential bias in abundance estimates associated with modelling changes in halibut and non-target distributions and abundance over time that would occur using only the fixed stations design. It furthers shows that the switch to a stratified random sampling design was timely and helped better quantify the increase in halibut catch rates observed since 2017.
 abstract_other: |
   Le relevé à la palangre de l'industrie et du MPO pour le flétan atlantique (*Hippoglossus hippoglossus*) est en cours depuis 1998 utilisant des stations fixes de collection de données et ayant comme objectif d'obtenir de l'information plus approprié sur l'abondance du flétan. Un examen des modèles utilisés sur ces données en 2016 a recommandé l'utilisation d'un modèle multinomiale exponentiel (MME) capable de prendre en compte la compétition pour les crochets de pêche et l'abondance des espèces cibles et non cibles en plus de recommander un changement au protocole de collecte de données. Cette recommandation a motivé l'implémentation d'un plan d'échantillonage aléatoire stratifié en 2017. Concurrent au plan d'échantillonage de stations fixes dont le nombre de stations a été réduit, ce nouveau protocol d'échantillonage a des protocoles de pêche plus standardizé et recueille plus d'information sur la condition des crochets pour informer le MME. L'objectif principal de ce rapport est la présentation d'une nouvelle version spatio-temporelle du MME capable de modèliser les données provenant des stations fixes et de l'échantillonage aléatoire stratifié à l'intérieur du même modèle. Ce modèle inclut également de nouveaux effets fixes et aléatoires où ces derniers prennent en compte la variabilité associée avec les navires de pêche. L'analyse souligne des problèmes potentiels provenant du relevé d'échantillonage utilisant des stations fixes et démontre que l'implémentation du relevé d'échantillonage aléatoire stratifié fut opportun car il a permis au modèle de mieux capturer l'augmentation des taux de captures de flétan en 2017.
 output:

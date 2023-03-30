@@ -1066,50 +1066,67 @@ load("rand_walk_output.RData")
 area_list<-list()
 for (i in c(1:length(diri_list))){
   wts = c()
-  for (j in 1:length(Report$ldat[Yearly_indices[i,]$ind_1:Yearly_indices[i,]$ind_2])){
+  for (j in 1:length(Report_walk$ldat[Yearly_indices[i,]$ind_1:Yearly_indices[i,]$ind_2])){
     temp_area<-length(which(station_IDs[[i]]==j))*4
     wts[j]<-temp_area
   }
   # Target
-  dweight_ave_t = sum((Report$ldat[Yearly_indices[i,]$ind_1:Yearly_indices[i,]$ind_2])*wts)/sum(wts)
+  dweight_ave_t = sum((Report_walk$ldat[Yearly_indices[i,]$ind_1:Yearly_indices[i,]$ind_2])*wts)/sum(wts)
   weighted_t<-dweight_ave_t
+  str_mean_t<-mean(Report_walk$ldat[Yearly_indices[i,]$ind_1:Yearly_indices[i,]$ind_2])
   # Standard error calculation
   wts = as.matrix(wts)
   # wi/sum(wi)
   wts_2 = wts/(sum(wts))
   # covariance matrix for estimated lambda t
-  cov = rep$cov
+  cov = rep_walk$cov
   cov_t = cov[(Yearly_indices[i,]$ind_1+49):(Yearly_indices[i,]$ind_2+49), (Yearly_indices[i,]$ind_1+49):(Yearly_indices[i,]$ind_2+49)]
+  str_mean_t_se<-as.numeric(t(rep(1/length(wts),length(wts)))%*%cov_t%*%rep(1/length(wts),length(wts)))
   
   # Standard error for Dirichlet method 
   se2_dir_t = t(wts_2)%*%cov_t%*%wts_2
   se_t<-se2_dir_t
   # Non-target
-  dweight_ave_nt = sum((Report$ldant[Yearly_indices[i,]$ind_1:Yearly_indices[i,]$ind_2])*wts)/sum(wts)
+  dweight_ave_nt = sum((Report_walk$ldant[Yearly_indices[i,]$ind_1:Yearly_indices[i,]$ind_2])*wts)/sum(wts)
   weighted_nt<-dweight_ave_nt
+  str_mean_nt<-mean(Report_walk$ldant[Yearly_indices[i,]$ind_1:Yearly_indices[i,]$ind_2])
   # covariance matrix for estimated lambda t
   cov_nt = cov[(tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i,]$ind_1+49):(tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i,]$ind_2+49), (tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i,]$ind_1+49) :(tail(Yearly_indices$ind_2,n=1)+Yearly_indices[i,]$ind_2+49)]
   # Standard error for Dirichlet method 
   se2_dir_nt = t(wts_2)%*%cov_nt%*%wts_2
   se_nt<-se2_dir_nt
+  str_mean_nt_se<-as.numeric(t(rep(1/length(wts),length(wts)))%*%cov_nt%*%rep(1/length(wts),length(wts)))
   
-  area_list[[i]]<-data.frame(weighted_t,sqrt(se_t),weighted_nt,sqrt(se_nt))
+  area_list[[i]]<-data.frame(weighted_t,sqrt(se_t),weighted_nt,sqrt(se_nt),str_mean_t,sqrt(str_mean_t_se),str_mean_nt,sqrt(str_mean_nt_se))
 }
 
 weighted_avgs_frame<-data.frame(w_t=rep(NA,22),se_t=rep(NA,22),
-                                w_nt=rep(NA,22),se_nt=rep(NA,22))
+                                w_nt=rep(NA,22),se_nt=rep(NA,22),
+                                mean_t=rep(NA,22),se_mean_t=rep(NA,22),
+                                mean_nt=rep(NA,22),se_mean_nt=rep(NA,22))
 for (i in c(1:22)){
   weighted_avgs_frame$w_t[i]<-area_list[[i]]$weighted_t
   weighted_avgs_frame$se_t[i]<-area_list[[i]]$sqrt.se_t.
   weighted_avgs_frame$w_nt[i]<-area_list[[i]]$weighted_nt
   weighted_avgs_frame$se_nt[i]<-area_list[[i]]$sqrt.se_nt.
+  weighted_avgs_frame$mean_t[i]<-area_list[[i]]$str_mean_t
+  weighted_avgs_frame$se_mean_t[i]<-area_list[[i]]$sqrt.str_mean_t_se
+  weighted_avgs_frame$mean_nt[i]<-area_list[[i]]$str_mean_nt
+  weighted_avgs_frame$se_mean_nt[i]<-area_list[[i]]$sqrt.str_mean_nt_se
 }
 
 w_lamb_t<-ggplot(data=weighted_avgs_frame)+
-  geom_point(aes(x=2000:2021,y=w_t),col="red")+
-  geom_line(aes(x=2000:2021,y=w_t),col="red")+
-  geom_ribbon(aes(x=2000:2021,ymax=w_t+2*se_t,ymin=w_t-2*se_t),fill="red",alpha=0.2)+
+  geom_point(aes(x=2000:2021,y=w_t,col="Spatially-Weighed Mean"))+
+  geom_line(aes(x=2000:2021,y=w_t,col="Spatially-Weighed Mean"))+
+  geom_ribbon(aes(x=2000:2021,ymax=w_t+2*se_t,ymin=w_t-2*se_t,fill="Spatially-Weighed Mean"),alpha=0.2)+
+  geom_point(aes(x=2000:2021,y=mean_t,col="Mean"))+
+  geom_line(aes(x=2000:2021,y=mean_t,col="Mean"))+
+  geom_ribbon(aes(x=2000:2021,ymax=mean_t+2*se_mean_t,ymin=mean_t-2*se_mean_t,fill="Mean"),alpha=0.2)+
+  scale_color_discrete(name="Aggregation Method")+
+  scale_fill_discrete(name="Aggregation Method")+
+  xlab("Year")+ylab("Estimated Halibut Catch Rate")+
   theme_bw()
+ggsave(file="comp_means_t.png",plot=w_lamb_t,width=9,height=7)
 
 w_lamb_nt<-ggplot(data=weighted_avgs_frame)+
   geom_point(aes(x=2000:2021,y=w_nt),col="blue")+
@@ -1117,6 +1134,18 @@ w_lamb_nt<-ggplot(data=weighted_avgs_frame)+
   geom_ribbon(aes(x=2000:2021,ymax=w_nt+2*se_nt,ymin=w_nt-2*se_nt),fill="blue",alpha=0.2)+
   theme_bw()
 
+rands_frame<-data.frame(rand_t=rep_walk$value[which(names(rep_walk$value)=="rand_t")],rand_t_se=rep_walk$sd[which(names(rep_walk$value)=="rand_t")],rand_nt=rep_walk$value[which(names(rep_walk$value)=="rand_nt")],rand_nt_se=rep_walk$sd[which(names(rep_walk$value)=="rand_nt")])
+
+#rands
+rand_plots<-ggplot(data=rands_frame)+
+  geom_point(aes(x=2000:2021,y=exp(rand_t),col="Halibut"))+
+  geom_line(aes(x=2000:2021,y=exp(rand_t),col="Halibut"))+
+  geom_ribbon(aes(x=2000:2021,ymax=exp(rand_t+2*rand_t_se),ymin=exp(rand_t-2*rand_t_se),fill="Halibut"),alpha=0.2)+
+  # geom_point(aes(x=2000:2021,y=exp(rand_nt),col="Non-Target"))+
+  # geom_line(aes(x=2000:2021,y=exp(rand_nt),col="Non-Target"))+
+  # geom_ribbon(aes(x=2000:2021,ymax=exp(rand_nt+2*rand_nt_se),ymin=exp(rand_nt-2*rand_nt_se),fill="Non-Target"),alpha=0.2)+
+  theme_bw()+xlab("Year")+ylab("Predicted Catch Rate")+
+  scale_color_discrete(name="")+scale_fill_discrete(name="")
 
 
 ```
